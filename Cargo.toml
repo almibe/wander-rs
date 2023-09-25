@@ -3,4 +3,5 @@
 members = [
     "wander",
     "wander-repl",
+    "wander-wasm",
 ]
