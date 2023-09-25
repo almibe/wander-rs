@@ -2,4 +2,5 @@
 
 members = [
     "wander",
+    "wander-repl",
 ]
