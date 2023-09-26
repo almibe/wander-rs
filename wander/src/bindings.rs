@@ -10,10 +10,10 @@ use std::{
 };
 
 #[derive(Default)]
-pub struct Bindings {
+pub struct Bindings<T: Clone> {
     token_transformers: RefCell<HashMap<String, Rc<TokenTransformer>>>,
-    host_functions: RefCell<HashMap<String, Rc<dyn HostFunction>>>,
-    scopes: Vec<HashMap<String, WanderValue>>,
+    host_functions: RefCell<HashMap<String, Rc<dyn HostFunction<T>>>>,
+    scopes: Vec<HashMap<String, WanderValue<T>>>,
 }
 
 pub struct EnvironmentBinding {
@@ -23,12 +23,12 @@ pub struct EnvironmentBinding {
     pub doc_string: String,
 }
 
-pub trait BindingsProvider {
-    fn add_bindings(&self, bindings: &mut Bindings);
+pub trait BindingsProvider<T: Clone> {
+    fn add_bindings(&self, bindings: &mut Bindings<T>);
 }
 
-impl Bindings {
-    pub fn new() -> Bindings {
+impl <T: Clone>Bindings<T> {
+    pub fn new() -> Bindings<T> {
         Bindings {
             token_transformers: RefCell::new(HashMap::new()),
             host_functions: RefCell::new(HashMap::new()),
@@ -44,7 +44,7 @@ impl Bindings {
         self.scopes.pop();
     }
 
-    pub fn read(&self, name: &String) -> Option<WanderValue> {
+    pub fn read(&self, name: &String) -> Option<WanderValue<T>> {
         let mut index = self.scopes.len();
         while index > 0 {
             match self.scopes.get(index - 1) {
@@ -60,18 +60,18 @@ impl Bindings {
         None
     }
 
-    pub fn bind(&mut self, name: String, value: WanderValue) {
+    pub fn bind(&mut self, name: String, value: WanderValue<T>) {
         let mut current_scope = self.scopes.pop().unwrap();
         current_scope.insert(name, value);
         self.scopes.push(current_scope);
     }
 
-    pub fn bind_host_function(&mut self, function: Rc<dyn HostFunction>) {
+    pub fn bind_host_function(&mut self, function: Rc<dyn HostFunction<T>>) {
         let full_name = function.name().to_string();
         self.host_functions.borrow_mut().insert(full_name, function);
     }
 
-    pub fn read_host_function(&self, name: &String) -> Option<Rc<dyn HostFunction>> {
+    pub fn read_host_function(&self, name: &String) -> Option<Rc<dyn HostFunction<T>>> {
         match self.host_functions.borrow().get(name) {
             None => None,
             Some(value) => Some(value.clone()),

@@ -7,7 +7,7 @@ use wander::{preludes::common, run, WanderValue};
 #[test]
 fn passing_assert_eq_call() {
     let input = "Assert.assertEq(true true)";
-    let res = run(input, &mut common());
+    let res = run(input, &mut common::<String>());
     let expected = Ok(WanderValue::Nothing);
     assert_eq!(res, expected);
 }
@@ -15,6 +15,6 @@ fn passing_assert_eq_call() {
 #[test]
 fn failing_assert_eq_call() {
     let input = "Assert.assertEq(true \"true\")";
-    let res = run(input, &mut common());
+    let res = run(input, &mut common::<String>());
     assert!(res.is_err());
 }

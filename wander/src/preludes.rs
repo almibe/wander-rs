@@ -6,12 +6,12 @@ use crate::{bindings::Bindings, HostFunction, WanderError, WanderType, WanderVal
 use std::rc::Rc;
 
 struct EqFunction {}
-impl HostFunction for EqFunction {
+impl <T: Clone + PartialEq>HostFunction<T> for EqFunction {
     fn run(
         &self,
-        arguments: &[WanderValue],
-        _bindings: &Bindings,
-    ) -> Result<WanderValue, WanderError> {
+        arguments: &[WanderValue<T>],
+        _bindings: &Bindings<T>,
+    ) -> Result<WanderValue<T>, WanderError> {
         if let [left, right] = arguments {
             Ok(crate::WanderValue::Boolean(left == right))
         } else {
@@ -39,12 +39,12 @@ impl HostFunction for EqFunction {
 }
 
 struct AssertEqFunction {}
-impl HostFunction for AssertEqFunction {
+impl <T: Clone + PartialEq>HostFunction<T> for AssertEqFunction {
     fn run(
         &self,
-        arguments: &[WanderValue],
-        _bindings: &Bindings,
-    ) -> Result<WanderValue, WanderError> {
+        arguments: &[WanderValue<T>],
+        _bindings: &Bindings<T>,
+    ) -> Result<WanderValue<T>, WanderError> {
         if let [left, right] = arguments {
             if left == right {
                 Ok(crate::WanderValue::Nothing)
@@ -76,12 +76,12 @@ impl HostFunction for AssertEqFunction {
 }
 
 struct AndFunction {}
-impl HostFunction for AndFunction {
+impl <T: Clone>HostFunction<T> for AndFunction {
     fn run(
         &self,
-        arguments: &[WanderValue],
-        _bindings: &Bindings,
-    ) -> Result<crate::WanderValue, WanderError> {
+        arguments: &[WanderValue<T>],
+        _bindings: &Bindings<T>,
+    ) -> Result<crate::WanderValue<T>, WanderError> {
         if let [WanderValue::Boolean(left), WanderValue::Boolean(right)] = arguments[..] {
             Ok(crate::WanderValue::Boolean(left && right))
         } else {
@@ -109,12 +109,12 @@ impl HostFunction for AndFunction {
 }
 
 struct NotFunction {}
-impl HostFunction for NotFunction {
+impl <T: Clone>HostFunction<T> for NotFunction {
     fn run(
         &self,
-        arguments: &[WanderValue],
-        _bindings: &Bindings,
-    ) -> Result<crate::WanderValue, WanderError> {
+        arguments: &[WanderValue<T>],
+        _bindings: &Bindings<T>,
+    ) -> Result<crate::WanderValue<T>, WanderError> {
         if let [WanderValue::Boolean(value)] = arguments[..] {
             Ok(crate::WanderValue::Boolean(!value))
         } else {
@@ -142,12 +142,12 @@ impl HostFunction for NotFunction {
 }
 
 struct EntityFunction {}
-impl HostFunction for EntityFunction {
+impl <T: Clone>HostFunction<T> for EntityFunction {
     fn run(
         &self,
-        arguments: &[WanderValue],
-        _bindings: &Bindings,
-    ) -> Result<WanderValue, WanderError> {
+        arguments: &[WanderValue<T>],
+        _bindings: &Bindings<T>,
+    ) -> Result<WanderValue<T>, WanderError> {
         if let [WanderValue::Tuple(value)] = arguments {
             if value.len() == 3 {
                 Ok(value.get(0).unwrap().clone())
@@ -181,12 +181,12 @@ impl HostFunction for EntityFunction {
 }
 
 struct AttributeFunction {}
-impl HostFunction for AttributeFunction {
+impl <T: Clone>HostFunction<T> for AttributeFunction {
     fn run(
         &self,
-        arguments: &[WanderValue],
-        _bindings: &Bindings,
-    ) -> Result<WanderValue, WanderError> {
+        arguments: &[WanderValue<T>],
+        _bindings: &Bindings<T>,
+    ) -> Result<WanderValue<T>, WanderError> {
         if let [WanderValue::List(value)] = arguments {
             if value.len() == 3 {
                 Ok(value.get(1).unwrap().clone())
@@ -220,12 +220,12 @@ impl HostFunction for AttributeFunction {
 }
 
 struct ValueFunction {}
-impl HostFunction for ValueFunction {
+impl <T: Clone>HostFunction<T> for ValueFunction {
     fn run(
         &self,
-        arguments: &[WanderValue],
-        _bindings: &Bindings,
-    ) -> Result<WanderValue, WanderError> {
+        arguments: &[WanderValue<T>],
+        _bindings: &Bindings<T>,
+    ) -> Result<WanderValue<T>, WanderError> {
         if let [WanderValue::List(value)] = arguments {
             if value.len() == 3 {
                 Ok(value.get(2).unwrap().clone())
@@ -259,12 +259,12 @@ impl HostFunction for ValueFunction {
 }
 
 struct AtFunction {}
-impl HostFunction for AtFunction {
-    fn run(&self, arguments: &[WanderValue], _: &Bindings) -> Result<WanderValue, WanderError> {
+impl <T: Clone>HostFunction<T> for AtFunction {
+    fn run(&self, arguments: &[WanderValue<T>], _: &Bindings<T>) -> Result<WanderValue<T>, WanderError> {
         if let [WanderValue::Int(index), WanderValue::List(value)] = arguments {
             let index: usize = index.to_owned().try_into().unwrap();
             if index < value.len() {
-                let t: Option<&WanderValue> = value.get(index);
+                let t: Option<&WanderValue<T>> = value.get(index);
                 match t {
                     Some(t) => Ok(t.to_owned()),
                     None => Err(WanderError("`at` function err.".to_owned())),
@@ -352,7 +352,7 @@ impl HostFunction for AtFunction {
 
 /// Creates a set of Bindings for Wander that consists of all of the common
 /// functionality, but doesn't interact with an instance of Ligature.
-pub fn common() -> Bindings {
+pub fn common<T: Clone + PartialEq>() -> Bindings<T> {
     let mut bindings = Bindings::new();
     bindings.bind_host_function(Rc::new(EqFunction {}));
 

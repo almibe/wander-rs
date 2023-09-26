@@ -11,7 +11,7 @@ fn read_write_test_strings() {
         "\"hello, world\"".to_owned(),
         "\"hello,\\nworld\"".to_owned(),
     ];
-    let res: Vec<WanderValue> = input
+    let res: Vec<WanderValue<String>> = input
         .iter()
         .map(|s| run(s, &mut common()).unwrap())
         .collect();

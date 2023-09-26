@@ -8,9 +8,9 @@ use wander::{preludes::common, run, WanderValue};
 #[test]
 fn basic_record() {
     let input = "(a: 24)";
-    let res = run(input, &mut common()).unwrap();
+    let res = run(input, &mut common::<String>()).unwrap();
     let res = format!("{res}");
-    let res = run(&res, &mut common()).unwrap();
+    let res = run(&res, &mut common::<String>()).unwrap();
     let mut record = HashMap::new();
     record.insert("a".to_owned(), WanderValue::Int(24));
     let expected = WanderValue::Record(record);

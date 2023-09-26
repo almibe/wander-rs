@@ -26,12 +26,12 @@ pub mod translation;
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct WanderError(pub String);
 
-pub trait HostFunction {
+pub trait HostFunction<T: Clone> {
     fn run(
         &self,
-        arguments: &[WanderValue],
-        bindings: &Bindings,
-    ) -> Result<WanderValue, WanderError>;
+        arguments: &[WanderValue<T>],
+        bindings: &Bindings<T>,
+    ) -> Result<WanderValue<T>, WanderError>;
     fn name(&self) -> String;
     fn doc(&self) -> String;
     fn params(&self) -> Vec<WanderType>;
@@ -50,7 +50,7 @@ pub enum WanderType {
     Identifier,
     Nothing,
     /// A named reference to a NativeFunction.
-    NativeFunction,
+    HostFunction,
     Lambda,
     List,
     Tuple,
@@ -59,12 +59,12 @@ pub enum WanderType {
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub struct HostValue {
-    pub type_name: String,
+pub struct HostValue<T> {
+    pub value: T,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub enum WanderValue {
+pub enum WanderValue<T: Clone> {
     Boolean(bool),
     Int(i64),
     String(String),
@@ -72,17 +72,17 @@ pub enum WanderValue {
     /// A named reference to a HostedFunction.
     HostedFunction(String),
     Lambda(Vec<String>, Vec<Element>),
-    Application(Box<Application>),
-    List(Vec<WanderValue>),
-    Tuple(Vec<WanderValue>),
-    Record(HashMap<String, WanderValue>),
-    HostValue(HostValue),
+    PartialApplication(Box<PartialApplication<T>>),
+    List(Vec<WanderValue<T>>),
+    Tuple(Vec<WanderValue<T>>),
+    Record(HashMap<String, WanderValue<T>>),
+    HostValue(HostValue<T>),
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub struct Application {
-    arguments: Vec<WanderValue>,
-    callee: WanderValue,
+pub struct PartialApplication<T: Clone> {
+    arguments: Vec<WanderValue<T>>,
+    callee: WanderValue<T>,
 }
 
 pub fn write_integer(integer: &i64) -> String {
@@ -115,10 +115,10 @@ pub fn write_string(string: &str) -> String {
     format!("\"{}\"", escaped_string)
 }
 
-fn write_list_or_tuple_wander_value(
+fn write_list_or_tuple_wander_value<T: Clone + Display>(
     open: char,
     close: char,
-    contents: &Vec<WanderValue>,
+    contents: &Vec<WanderValue<T>>,
     f: &mut std::fmt::Formatter<'_>,
 ) -> std::fmt::Result {
     f.write_char(open).unwrap();
@@ -133,12 +133,12 @@ fn write_list_or_tuple_wander_value(
     write!(f, "{close}")
 }
 
-fn write_host_value(value: &HostValue, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "{}", value.type_name)
+fn write_host_value<T: Display>(value: &HostValue<T>, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", value.value)
 }
 
-fn write_record(
-    contents: &HashMap<String, WanderValue>,
+fn write_record<T: Clone + Display>(
+    contents: &HashMap<String, WanderValue<T>>,
     f: &mut std::fmt::Formatter<'_>,
 ) -> std::fmt::Result {
     write!(f, "(").unwrap();
@@ -153,7 +153,7 @@ fn write_record(
     write!(f, ")")
 }
 
-impl Display for WanderValue {
+impl <T: Clone + Display> Display for WanderValue<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             WanderValue::Boolean(value) => write!(f, "{}", value),
@@ -166,12 +166,12 @@ impl Display for WanderValue {
             WanderValue::HostValue(value) => write_host_value(value, f),
             WanderValue::Tuple(contents) => write_list_or_tuple_wander_value('(', ')', contents, f),
             WanderValue::Record(values) => write_record(values, f),
-            WanderValue::Application(_) => write!(f, "[application]"),
+            WanderValue::PartialApplication(_) => write!(f, "[application]"),
         }
     }
 }
 
-pub fn run(script: &str, bindings: &mut Bindings) -> Result<WanderValue, WanderError> {
+pub fn run<T: Clone + Display>(script: &str, bindings: &mut Bindings<T>) -> Result<WanderValue<T>, WanderError> {
     let tokens = tokenize(script)?;
     let tokens = transform(&tokens, bindings)?;
     let elements = parse(tokens)?;

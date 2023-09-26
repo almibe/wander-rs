@@ -4,12 +4,13 @@
 
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::fmt::Display;
 
 use crate::bindings::Bindings;
 use crate::parser::Element;
-use crate::{Application, WanderError, WanderValue};
+use crate::{PartialApplication, WanderError, WanderValue};
 
-pub fn eval(script: &Vec<Element>, bindings: &mut Bindings) -> Result<WanderValue, WanderError> {
+pub fn eval<T: Clone + Display>(script: &Vec<Element>, bindings: &mut Bindings<T>) -> Result<WanderValue<T>, WanderError> {
     let mut result = Ok(WanderValue::Nothing);
     for element in script {
         result = Ok(eval_element(element, bindings)?);
@@ -17,10 +18,10 @@ pub fn eval(script: &Vec<Element>, bindings: &mut Bindings) -> Result<WanderValu
     result
 }
 
-pub fn eval_element(
+pub fn eval_element<T: Clone + Display>(
     element: &Element,
-    bindings: &mut Bindings,
-) -> Result<WanderValue, WanderError> {
+    bindings: &mut Bindings<T>,
+) -> Result<WanderValue<T>, WanderError> {
     match element {
         Element::Boolean(value) => Ok(WanderValue::Boolean(*value)),
         Element::Int(value) => Ok(WanderValue::Int(*value)),
@@ -82,10 +83,10 @@ fn unescape_string(value: String) -> String {
     result
 }
 
-fn handle_tuple(
+fn handle_tuple<T: Clone + Display>(
     elements: &Vec<Element>,
-    bindings: &mut Bindings,
-) -> Result<WanderValue, WanderError> {
+    bindings: &mut Bindings<T>,
+) -> Result<WanderValue<T>, WanderError> {
     let mut results = vec![];
     for element in elements {
         match eval_element(element, bindings) {
@@ -96,10 +97,10 @@ fn handle_tuple(
     Ok(WanderValue::Tuple(results))
 }
 
-fn handle_record(
+fn handle_record<T: Clone + Display>(
     elements: &HashMap<String, Element>,
-    bindings: &mut Bindings,
-) -> Result<WanderValue, WanderError> {
+    bindings: &mut Bindings<T>,
+) -> Result<WanderValue<T>, WanderError> {
     let mut results = HashMap::new();
     for (name, element) in elements {
         match eval_element(element, bindings) {
@@ -110,10 +111,10 @@ fn handle_record(
     Ok(WanderValue::Record(results))
 }
 
-fn handle_list(
+fn handle_list<T: Clone + Display>(
     elements: &Vec<Element>,
-    bindings: &mut Bindings,
-) -> Result<WanderValue, WanderError> {
+    bindings: &mut Bindings<T>,
+) -> Result<WanderValue<T>, WanderError> {
     let mut results = vec![];
     for element in elements {
         match eval_element(element, bindings) {
@@ -124,16 +125,16 @@ fn handle_list(
     Ok(WanderValue::List(results))
 }
 
-fn handle_lambda(params: &Vec<String>, body: &Vec<Element>) -> Result<WanderValue, WanderError> {
+fn handle_lambda<T: Clone>(params: &Vec<String>, body: &Vec<Element>) -> Result<WanderValue<T>, WanderError> {
     Ok(WanderValue::Lambda(params.to_owned(), body.to_owned()))
 }
 
-fn handle_conditional(
+fn handle_conditional<T: Clone + Display>(
     cond: &Element,
     ife: &Element,
     elsee: &Element,
-    bindings: &mut Bindings,
-) -> Result<WanderValue, WanderError> {
+    bindings: &mut Bindings<T>,
+) -> Result<WanderValue<T>, WanderError> {
     match eval_element(cond, bindings)? {
         WanderValue::Boolean(true) => eval_element(ife, bindings),
         WanderValue::Boolean(false) => eval_element(elsee, bindings),
@@ -143,18 +144,18 @@ fn handle_conditional(
     }
 }
 
-fn handle_scope(body: &Vec<Element>, bindings: &mut Bindings) -> Result<WanderValue, WanderError> {
+fn handle_scope<T: Clone + Display>(body: &Vec<Element>, bindings: &mut Bindings<T>) -> Result<WanderValue<T>, WanderError> {
     bindings.add_scope();
     let res = eval(body, bindings);
     bindings.remove_scope();
     res
 }
 
-fn handle_let(
+fn handle_let<T: Clone + Display>(
     name: &String,
     element: &Element,
-    bindings: &mut Bindings,
-) -> Result<WanderValue, WanderError> {
+    bindings: &mut Bindings<T>,
+) -> Result<WanderValue<T>, WanderError> {
     match eval_element(element, bindings) {
         Ok(value) => {
             bindings.bind(name.to_string(), value);
@@ -164,7 +165,7 @@ fn handle_let(
     }
 }
 
-fn read_name(name: &String, bindings: &mut Bindings) -> Result<WanderValue, WanderError> {
+fn read_name<T: Clone>(name: &String, bindings: &mut Bindings<T>) -> Result<WanderValue<T>, WanderError> {
     if let Some(value) = bindings.read(name) {
         Ok(value)
     } else {
@@ -175,11 +176,11 @@ fn read_name(name: &String, bindings: &mut Bindings) -> Result<WanderValue, Wand
     }
 }
 
-fn call_function(
+fn call_function<T: Clone + Display>(
     name: &String,
     arguments: &Vec<Element>,
-    bindings: &mut Bindings,
-) -> Result<WanderValue, WanderError> {
+    bindings: &mut Bindings<T>,
+) -> Result<WanderValue<T>, WanderError> {
     let mut argument_values = vec![];
     for argument in arguments {
         match eval_element(argument, bindings) {
@@ -218,13 +219,13 @@ fn call_function(
                     name,
                     parameters.len()
                 ))),
-                Ordering::Greater => Ok(WanderValue::Application(Box::new(Application {
+                Ordering::Greater => Ok(WanderValue::PartialApplication(Box::new(PartialApplication {
                     arguments: argument_values,
                     callee: WanderValue::Lambda(parameters, body),
                 }))),
             }
         }
-        Some(WanderValue::Application(application)) => match application.callee {
+        Some(WanderValue::PartialApplication(application)) => match application.callee {
             WanderValue::HostedFunction(function_name) => {
                 let mut args = application.arguments.clone();
                 args.append(&mut argument_values.clone());
@@ -234,7 +235,7 @@ fn call_function(
                         if args.len() == function.params().len() {
                             function.run(&args, bindings)
                         } else {
-                            Ok(WanderValue::Application(Box::new(Application {
+                            Ok(WanderValue::PartialApplication(Box::new(PartialApplication {
                                 arguments: args,
                                 callee: WanderValue::HostedFunction(function_name.clone()),
                             })))
@@ -254,7 +255,7 @@ fn call_function(
                     bindings.remove_scope();
                     res
                 } else {
-                    Ok(WanderValue::Application(Box::new(Application {
+                    Ok(WanderValue::PartialApplication(Box::new(PartialApplication {
                         arguments: args,
                         callee: WanderValue::Lambda(parameters, body),
                     })))
@@ -272,7 +273,7 @@ fn call_function(
                 if argument_values.len() == function.params().len() {
                     function.run(&argument_values, bindings)
                 } else {
-                    Ok(WanderValue::Application(Box::new(Application {
+                    Ok(WanderValue::PartialApplication(Box::new(PartialApplication {
                         arguments: argument_values,
                         callee: WanderValue::HostedFunction(name.clone()),
                     })))
