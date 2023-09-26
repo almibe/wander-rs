@@ -133,7 +133,10 @@ fn write_list_or_tuple_wander_value<T: Clone + Display>(
     write!(f, "{close}")
 }
 
-fn write_host_value<T: Display>(value: &HostValue<T>, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+fn write_host_value<T: Display>(
+    value: &HostValue<T>,
+    f: &mut std::fmt::Formatter<'_>,
+) -> std::fmt::Result {
     write!(f, "{}", value.value)
 }
 
@@ -153,7 +156,7 @@ fn write_record<T: Clone + Display>(
     write!(f, ")")
 }
 
-impl <T: Clone + Display> Display for WanderValue<T> {
+impl<T: Clone + Display> Display for WanderValue<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             WanderValue::Boolean(value) => write!(f, "{}", value),
@@ -171,7 +174,10 @@ impl <T: Clone + Display> Display for WanderValue<T> {
     }
 }
 
-pub fn run<T: Clone + Display>(script: &str, bindings: &mut Bindings<T>) -> Result<WanderValue<T>, WanderError> {
+pub fn run<T: Clone + Display>(
+    script: &str,
+    bindings: &mut Bindings<T>,
+) -> Result<WanderValue<T>, WanderError> {
     let tokens = tokenize(script)?;
     let tokens = transform(&tokens, bindings)?;
     let elements = parse(tokens)?;

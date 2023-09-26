@@ -10,7 +10,10 @@ use crate::bindings::Bindings;
 use crate::parser::Element;
 use crate::{PartialApplication, WanderError, WanderValue};
 
-pub fn eval<T: Clone + Display>(script: &Vec<Element>, bindings: &mut Bindings<T>) -> Result<WanderValue<T>, WanderError> {
+pub fn eval<T: Clone + Display>(
+    script: &Vec<Element>,
+    bindings: &mut Bindings<T>,
+) -> Result<WanderValue<T>, WanderError> {
     let mut result = Ok(WanderValue::Nothing);
     for element in script {
         result = Ok(eval_element(element, bindings)?);
@@ -125,7 +128,10 @@ fn handle_list<T: Clone + Display>(
     Ok(WanderValue::List(results))
 }
 
-fn handle_lambda<T: Clone>(params: &Vec<String>, body: &Vec<Element>) -> Result<WanderValue<T>, WanderError> {
+fn handle_lambda<T: Clone>(
+    params: &Vec<String>,
+    body: &Vec<Element>,
+) -> Result<WanderValue<T>, WanderError> {
     Ok(WanderValue::Lambda(params.to_owned(), body.to_owned()))
 }
 
@@ -144,7 +150,10 @@ fn handle_conditional<T: Clone + Display>(
     }
 }
 
-fn handle_scope<T: Clone + Display>(body: &Vec<Element>, bindings: &mut Bindings<T>) -> Result<WanderValue<T>, WanderError> {
+fn handle_scope<T: Clone + Display>(
+    body: &Vec<Element>,
+    bindings: &mut Bindings<T>,
+) -> Result<WanderValue<T>, WanderError> {
     bindings.add_scope();
     let res = eval(body, bindings);
     bindings.remove_scope();
@@ -165,7 +174,10 @@ fn handle_let<T: Clone + Display>(
     }
 }
 
-fn read_name<T: Clone>(name: &String, bindings: &mut Bindings<T>) -> Result<WanderValue<T>, WanderError> {
+fn read_name<T: Clone>(
+    name: &String,
+    bindings: &mut Bindings<T>,
+) -> Result<WanderValue<T>, WanderError> {
     if let Some(value) = bindings.read(name) {
         Ok(value)
     } else {
@@ -219,10 +231,12 @@ fn call_function<T: Clone + Display>(
                     name,
                     parameters.len()
                 ))),
-                Ordering::Greater => Ok(WanderValue::PartialApplication(Box::new(PartialApplication {
-                    arguments: argument_values,
-                    callee: WanderValue::Lambda(parameters, body),
-                }))),
+                Ordering::Greater => Ok(WanderValue::PartialApplication(Box::new(
+                    PartialApplication {
+                        arguments: argument_values,
+                        callee: WanderValue::Lambda(parameters, body),
+                    },
+                ))),
             }
         }
         Some(WanderValue::PartialApplication(application)) => match application.callee {
@@ -235,10 +249,12 @@ fn call_function<T: Clone + Display>(
                         if args.len() == function.params().len() {
                             function.run(&args, bindings)
                         } else {
-                            Ok(WanderValue::PartialApplication(Box::new(PartialApplication {
-                                arguments: args,
-                                callee: WanderValue::HostedFunction(function_name.clone()),
-                            })))
+                            Ok(WanderValue::PartialApplication(Box::new(
+                                PartialApplication {
+                                    arguments: args,
+                                    callee: WanderValue::HostedFunction(function_name.clone()),
+                                },
+                            )))
                         }
                     }
                 }
@@ -255,10 +271,12 @@ fn call_function<T: Clone + Display>(
                     bindings.remove_scope();
                     res
                 } else {
-                    Ok(WanderValue::PartialApplication(Box::new(PartialApplication {
-                        arguments: args,
-                        callee: WanderValue::Lambda(parameters, body),
-                    })))
+                    Ok(WanderValue::PartialApplication(Box::new(
+                        PartialApplication {
+                            arguments: args,
+                            callee: WanderValue::Lambda(parameters, body),
+                        },
+                    )))
                 }
             }
             _ => panic!(
@@ -273,10 +291,12 @@ fn call_function<T: Clone + Display>(
                 if argument_values.len() == function.params().len() {
                     function.run(&argument_values, bindings)
                 } else {
-                    Ok(WanderValue::PartialApplication(Box::new(PartialApplication {
-                        arguments: argument_values,
-                        callee: WanderValue::HostedFunction(name.clone()),
-                    })))
+                    Ok(WanderValue::PartialApplication(Box::new(
+                        PartialApplication {
+                            arguments: argument_values,
+                            callee: WanderValue::HostedFunction(name.clone()),
+                        },
+                    )))
                 }
             }
         },

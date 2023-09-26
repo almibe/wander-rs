@@ -27,7 +27,7 @@ pub trait BindingsProvider<T: Clone> {
     fn add_bindings(&self, bindings: &mut Bindings<T>);
 }
 
-impl <T: Clone>Bindings<T> {
+impl<T: Clone> Bindings<T> {
     pub fn new() -> Bindings<T> {
         Bindings {
             token_transformers: RefCell::new(HashMap::new()),

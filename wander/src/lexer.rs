@@ -117,7 +117,10 @@ pub fn tokenize(script: &str) -> Result<Vec<Token>, WanderError> {
     Ok(results)
 }
 
-pub fn transform<T: Clone>(input: &[Token], bindings: &Bindings<T>) -> Result<Vec<Token>, WanderError> {
+pub fn transform<T: Clone>(
+    input: &[Token],
+    bindings: &Bindings<T>,
+) -> Result<Vec<Token>, WanderError> {
     let mut index = 0;
     let mut results = vec![];
     while let Some(token) = input.get(index) {

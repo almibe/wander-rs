@@ -7,7 +7,7 @@ use std::rc::Rc;
 use wander::interpreter::eval;
 use wander::parser::Element;
 use wander::preludes::common;
-use wander::{WanderValue, HostFunction, WanderType, WanderError, HostValue};
+use wander::{HostFunction, HostValue, WanderError, WanderType, WanderValue};
 
 struct SayHello {}
 impl HostFunction<String> for SayHello {
@@ -16,7 +16,9 @@ impl HostFunction<String> for SayHello {
         _arguments: &[WanderValue<String>],
         _bindings: &wander::bindings::Bindings<String>,
     ) -> Result<WanderValue<String>, WanderError> {
-        Ok(WanderValue::HostValue(HostValue { value: "hello!".to_owned() }))
+        Ok(WanderValue::HostValue(HostValue {
+            value: "hello!".to_owned(),
+        }))
     }
 
     fn name(&self) -> String {
@@ -36,13 +38,12 @@ impl HostFunction<String> for SayHello {
     }
 }
 
-
 #[test]
-fn eval_boolean_true() {
+fn eval_host_value() {
     let mut bindings = common::<String>();
     bindings.bind_host_function(Rc::new(SayHello {}));
     let input = vec![Element::FunctionCall("hello".to_owned(), vec![])];
     let res = eval(&input, &mut bindings);
-    let expected = Ok(WanderValue::Boolean(true));
+    let expected = Ok(WanderValue::HostValue(HostValue { value: "hello!".to_owned() }));
     assert_eq!(res, expected);
 }

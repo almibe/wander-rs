@@ -4,7 +4,7 @@
 
 use std::rc::Rc;
 use wander::preludes::common;
-use wander::{lexer::Token, run, TokenTransformer, WanderError, WanderValue};
+use wander::{lexer::Token, run, WanderError, WanderValue};
 
 fn empty_transform(_input: &[Token]) -> Result<Vec<Token>, WanderError> {
     Ok(vec![])
