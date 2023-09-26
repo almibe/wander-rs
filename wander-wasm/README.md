@@ -1,6 +1,6 @@
-# ligature-wasm
+# wander-wasm
 
-This project exposes functionality from the Rust implementation of Ligature to WASM and JS runtimes thanks to wasm-bindgen and wasm-pack.
+This project exposes functionality from the Rust implementation of Wander to WASM and JS runtimes thanks to wasm-bindgen and wasm-pack.
 It can be used by people with no knowledge or interest in Rust or WASM since it is published to NPM and has a purely JavaScript or TypeScript interface available.
 
 ## Using
@@ -25,7 +25,7 @@ wasm-pack publish
 To publish run `wasm-pack build` and then run (assuming you have https://deno.land installed):
 
 ```bash
-deno run --allow-all .\merge_template.ts
+deno run --allow-all ./merge_template.ts
 ```
 
 This will update the package.json.
