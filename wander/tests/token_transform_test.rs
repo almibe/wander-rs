@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::rc::Rc;
+use wander::NoHostType;
 use wander::preludes::common;
 use wander::{lexer::Token, run, WanderError, WanderValue};
 
@@ -27,7 +28,7 @@ fn upper_case_transform(input: &[Token]) -> Result<Vec<Token>, WanderError> {
 #[test]
 fn empty_transformer_no_input_test() {
     let input = "Empty.empty``";
-    let mut bindings = common::<String>();
+    let mut bindings = common::<NoHostType>();
     bindings.bind_token_transformer(
         "Empty".to_owned(),
         "empty".to_owned(),
@@ -41,7 +42,7 @@ fn empty_transformer_no_input_test() {
 #[test]
 fn token_transformer_no_input_test() {
     let input = "None.none``";
-    let mut bindings = common::<String>();
+    let mut bindings = common::<NoHostType>();
     bindings.bind_token_transformer(
         "None".to_owned(),
         "none".to_owned(),
@@ -55,7 +56,7 @@ fn token_transformer_no_input_test() {
 #[test]
 fn token_transformer_none() {
     let input = "None.none`this (will) >>  [be ] {ignored}} `";
-    let mut bindings = common::<String>();
+    let mut bindings = common::<NoHostType>();
     bindings.bind_token_transformer(
         "None".to_owned(),
         "none".to_owned(),
@@ -69,7 +70,7 @@ fn token_transformer_none() {
 #[test]
 fn token_transformer_upper() {
     let input = "Case.upper`\"test\"`";
-    let mut bindings = common::<String>();
+    let mut bindings = common::<NoHostType>();
     bindings.bind_token_transformer(
         "Case".to_owned(),
         "upper".to_owned(),

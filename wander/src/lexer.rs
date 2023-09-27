@@ -117,7 +117,7 @@ pub fn tokenize(script: &str) -> Result<Vec<Token>, WanderError> {
     Ok(results)
 }
 
-pub fn transform<T: Clone>(
+pub fn transform<T: Clone + PartialEq>(
     input: &[Token],
     bindings: &Bindings<T>,
 ) -> Result<Vec<Token>, WanderError> {

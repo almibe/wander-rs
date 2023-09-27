@@ -26,7 +26,17 @@ pub mod translation;
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct WanderError(pub String);
 
-pub trait HostFunction<T: Clone> {
+/// This is a dummy type you can use when you don't need a HostType.
+#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, Clone)]
+pub struct NoHostType {}
+
+impl Display for NoHostType {
+    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("NoHostType should never be displayed.")
+    }
+}
+
+pub trait HostFunction<T: Clone + PartialEq> {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
@@ -115,7 +125,7 @@ pub fn write_string(string: &str) -> String {
     format!("\"{}\"", escaped_string)
 }
 
-fn write_list_or_tuple_wander_value<T: Clone + Display>(
+fn write_list_or_tuple_wander_value<T: Clone + Display + PartialEq>(
     open: char,
     close: char,
     contents: &Vec<WanderValue<T>>,
@@ -133,14 +143,14 @@ fn write_list_or_tuple_wander_value<T: Clone + Display>(
     write!(f, "{close}")
 }
 
-fn write_host_value<T: Display>(
+fn write_host_value<T: Display + PartialEq>(
     value: &HostValue<T>,
     f: &mut std::fmt::Formatter<'_>,
 ) -> std::fmt::Result {
     write!(f, "{}", value.value)
 }
 
-fn write_record<T: Clone + Display>(
+fn write_record<T: Clone + Display + PartialEq>(
     contents: &HashMap<String, WanderValue<T>>,
     f: &mut std::fmt::Formatter<'_>,
 ) -> std::fmt::Result {
@@ -156,7 +166,7 @@ fn write_record<T: Clone + Display>(
     write!(f, ")")
 }
 
-impl<T: Clone + Display> Display for WanderValue<T> {
+impl<T: Clone + Display + PartialEq> Display for WanderValue<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             WanderValue::Boolean(value) => write!(f, "{}", value),
@@ -174,7 +184,7 @@ impl<T: Clone + Display> Display for WanderValue<T> {
     }
 }
 
-pub fn run<T: Clone + Display>(
+pub fn run<T: Clone + Display + PartialEq>(
     script: &str,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {

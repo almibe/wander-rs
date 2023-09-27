@@ -10,7 +10,7 @@ use crate::bindings::Bindings;
 use crate::parser::Element;
 use crate::{PartialApplication, WanderError, WanderValue};
 
-pub fn eval<T: Clone + Display>(
+pub fn eval<T: Clone + Display + PartialEq>(
     script: &Vec<Element>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -21,7 +21,7 @@ pub fn eval<T: Clone + Display>(
     result
 }
 
-pub fn eval_element<T: Clone + Display>(
+pub fn eval_element<T: Clone + Display + PartialEq>(
     element: &Element,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -86,7 +86,7 @@ fn unescape_string(value: String) -> String {
     result
 }
 
-fn handle_tuple<T: Clone + Display>(
+fn handle_tuple<T: Clone + Display + PartialEq>(
     elements: &Vec<Element>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -100,7 +100,7 @@ fn handle_tuple<T: Clone + Display>(
     Ok(WanderValue::Tuple(results))
 }
 
-fn handle_record<T: Clone + Display>(
+fn handle_record<T: Clone + Display + PartialEq>(
     elements: &HashMap<String, Element>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -114,7 +114,7 @@ fn handle_record<T: Clone + Display>(
     Ok(WanderValue::Record(results))
 }
 
-fn handle_list<T: Clone + Display>(
+fn handle_list<T: Clone + Display + PartialEq>(
     elements: &Vec<Element>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -128,14 +128,14 @@ fn handle_list<T: Clone + Display>(
     Ok(WanderValue::List(results))
 }
 
-fn handle_lambda<T: Clone>(
+fn handle_lambda<T: Clone + PartialEq>(
     params: &Vec<String>,
     body: &Vec<Element>,
 ) -> Result<WanderValue<T>, WanderError> {
     Ok(WanderValue::Lambda(params.to_owned(), body.to_owned()))
 }
 
-fn handle_conditional<T: Clone + Display>(
+fn handle_conditional<T: Clone + Display + PartialEq>(
     cond: &Element,
     ife: &Element,
     elsee: &Element,
@@ -150,7 +150,7 @@ fn handle_conditional<T: Clone + Display>(
     }
 }
 
-fn handle_scope<T: Clone + Display>(
+fn handle_scope<T: Clone + Display + PartialEq>(
     body: &Vec<Element>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -160,7 +160,7 @@ fn handle_scope<T: Clone + Display>(
     res
 }
 
-fn handle_let<T: Clone + Display>(
+fn handle_let<T: Clone + Display + PartialEq>(
     name: &String,
     element: &Element,
     bindings: &mut Bindings<T>,
@@ -174,7 +174,7 @@ fn handle_let<T: Clone + Display>(
     }
 }
 
-fn read_name<T: Clone>(
+fn read_name<T: Clone + PartialEq + Display>(
     name: &String,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -183,12 +183,38 @@ fn read_name<T: Clone>(
     } else {
         match bindings.read_host_function(name) {
             Some(_) => Ok(WanderValue::HostedFunction(name.to_owned())),
-            None => Err(WanderError(format!("Error looking up {name}"))),
+            None => read_field(name, bindings)
         }
     }
 }
 
-fn call_function<T: Clone + Display>(
+fn read_field<T: Clone + PartialEq + Display>(
+    name: &String,
+    bindings: &mut Bindings<T>,
+) -> Result<WanderValue<T>, WanderError> {
+    let t = name.split('.').collect::<Vec<&str>>();
+    let mut result = None;
+    let (name, fields) = t.split_first().unwrap();
+    if let Some(WanderValue::Record(value)) = bindings.read(&name.to_string()) {
+        for field in fields {
+            match result {
+                Some(WanderValue::Record(r)) => result = Some(r.get(field.clone()).unwrap().clone()),
+                Some(x) => return Err(WanderError(format!("Could not access field {field} in {x}."))),
+                None => {
+                    match value.get(field.clone()) {
+                        Some(r) => result = Some(r.clone()),
+                        None => return Err(WanderError(format!("Could not read field {name}"))),
+                    }
+                },
+            }
+        }
+        Ok(result.unwrap().clone())
+    } else {
+        Err(WanderError(format!("Error looking up {name}")))
+    }
+}
+
+fn call_function<T: Clone + Display + PartialEq>(
     name: &String,
     arguments: &Vec<Element>,
     bindings: &mut Bindings<T>,

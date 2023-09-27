@@ -76,7 +76,7 @@ impl<T: Clone + PartialEq> HostFunction<T> for AssertEqFunction {
 }
 
 struct AndFunction {}
-impl<T: Clone> HostFunction<T> for AndFunction {
+impl<T: Clone + PartialEq> HostFunction<T> for AndFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
@@ -109,7 +109,7 @@ impl<T: Clone> HostFunction<T> for AndFunction {
 }
 
 struct NotFunction {}
-impl<T: Clone> HostFunction<T> for NotFunction {
+impl<T: Clone + PartialEq> HostFunction<T> for NotFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
@@ -142,7 +142,7 @@ impl<T: Clone> HostFunction<T> for NotFunction {
 }
 
 struct EntityFunction {}
-impl<T: Clone> HostFunction<T> for EntityFunction {
+impl<T: Clone + PartialEq> HostFunction<T> for EntityFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
@@ -181,7 +181,7 @@ impl<T: Clone> HostFunction<T> for EntityFunction {
 }
 
 struct AttributeFunction {}
-impl<T: Clone> HostFunction<T> for AttributeFunction {
+impl<T: Clone + PartialEq> HostFunction<T> for AttributeFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
@@ -220,7 +220,7 @@ impl<T: Clone> HostFunction<T> for AttributeFunction {
 }
 
 struct ValueFunction {}
-impl<T: Clone> HostFunction<T> for ValueFunction {
+impl<T: Clone + PartialEq> HostFunction<T> for ValueFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
@@ -259,7 +259,7 @@ impl<T: Clone> HostFunction<T> for ValueFunction {
 }
 
 struct AtFunction {}
-impl<T: Clone> HostFunction<T> for AtFunction {
+impl<T: Clone + PartialEq> HostFunction<T> for AtFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],

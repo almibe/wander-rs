@@ -2,12 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use wander::{preludes::common, run, WanderValue};
+use wander::{preludes::common, run, WanderValue, NoHostType};
 
 #[test]
 fn passing_assert_eq_call() {
     let input = "Assert.assertEq(true true)";
-    let res = run(input, &mut common::<String>());
+    let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Nothing);
     assert_eq!(res, expected);
 }
@@ -15,6 +15,6 @@ fn passing_assert_eq_call() {
 #[test]
 fn failing_assert_eq_call() {
     let input = "Assert.assertEq(true \"true\")";
-    let res = run(input, &mut common::<String>());
+    let res = run(input, &mut common::<NoHostType>());
     assert!(res.is_err());
 }

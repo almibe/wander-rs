@@ -17,8 +17,8 @@ use wander::bindings::{Bindings, EnvironmentBinding};
 use wander::preludes::common;
 use wander::run;
 
-struct REPLState {
-    bindings: Bindings,
+struct REPLState<T: Clone + PartialEq> {
+    bindings: Bindings<T>,
 }
 
 fn main() -> Result<()> {
@@ -66,7 +66,7 @@ fn main() -> Result<()> {
     rl.save_history("history.txt")
 }
 
-fn handle_command(input: &str, instance: &mut REPLState) -> bool {
+fn handle_command<T: Clone + PartialEq>(input: &str, instance: &mut REPLState<T>) -> bool {
     let mut parts = input.split_whitespace();
     match parts.next().unwrap() {
         //":remote" => todo!(),
@@ -85,7 +85,7 @@ fn broadcast(_input: &str) -> bool {
     true
 }
 
-fn bindings(bindings: &Bindings) -> bool {
+fn bindings<T: Clone + PartialEq>(bindings: &Bindings<T>) -> bool {
     bindings
         .bound_names()
         .iter()
@@ -93,7 +93,7 @@ fn bindings(bindings: &Bindings) -> bool {
     true
 }
 
-fn environment(bindings: &mut Bindings) -> bool {
+fn environment<T: Clone + PartialEq>(bindings: &mut Bindings<T>) -> bool {
     let mut display: Vec<EnvironmentDisplay> = bindings
         .environment()
         .into_iter()

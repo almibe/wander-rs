@@ -7,7 +7,7 @@ use std::rc::Rc;
 use wander::interpreter::eval;
 use wander::parser::Element;
 use wander::preludes::common;
-use wander::{HostFunction, HostValue, WanderError, WanderType, WanderValue};
+use wander::{HostFunction, HostValue, WanderError, WanderType, WanderValue, NoHostType};
 
 struct SayHello {}
 impl HostFunction<String> for SayHello {

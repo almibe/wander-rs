@@ -5,12 +5,12 @@
 use wander::interpreter::eval;
 use wander::parser::Element;
 use wander::preludes::common;
-use wander::WanderValue;
+use wander::{WanderValue, NoHostType};
 
 #[test]
 fn eval_boolean_true() {
     let input = vec![Element::Boolean(true)];
-    let res = eval(&input, &mut common::<String>());
+    let res = eval(&input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Boolean(true));
     assert_eq!(res, expected);
 }
@@ -18,7 +18,7 @@ fn eval_boolean_true() {
 #[test]
 fn eval_string_with_quotes() {
     let input = vec![Element::String("\"\\\"\"".to_owned())];
-    let res = eval(&input, &mut common::<String>());
+    let res = eval(&input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::String("\"".to_owned()));
     assert_eq!(res, expected);
 }
