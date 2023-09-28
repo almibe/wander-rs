@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use wander::{preludes::common, run, WanderValue, NoHostType};
+use wander::{preludes::common, run, NoHostType, WanderValue};
 
 #[test]
 fn passing_assert_eq_call() {

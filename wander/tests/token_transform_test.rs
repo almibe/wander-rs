@@ -3,8 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::rc::Rc;
-use wander::NoHostType;
 use wander::preludes::common;
+use wander::NoHostType;
 use wander::{lexer::Token, run, WanderError, WanderValue};
 
 fn empty_transform(_input: &[Token]) -> Result<Vec<Token>, WanderError> {

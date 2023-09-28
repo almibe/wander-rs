@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::collections::HashMap;
-use wander::{preludes::common, run, WanderValue, NoHostType};
+use wander::{preludes::common, run, NoHostType, WanderValue};
 
 #[test]
 fn basic_record() {
@@ -28,7 +28,10 @@ fn nested_record() {
     record.insert("b".to_owned(), WanderValue::String("c".to_owned()));
 
     let mut inner_record = HashMap::new();
-    inner_record.insert("d".to_owned(), WanderValue::Tuple(vec![WanderValue::String("e".to_owned())]));
+    inner_record.insert(
+        "d".to_owned(),
+        WanderValue::Tuple(vec![WanderValue::String("e".to_owned())]),
+    );
 
     record.insert("c".to_owned(), WanderValue::Record(inner_record));
 

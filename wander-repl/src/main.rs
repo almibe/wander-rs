@@ -15,14 +15,14 @@ use tabled::{
 };
 use wander::bindings::{Bindings, EnvironmentBinding};
 use wander::preludes::common;
-use wander::run;
+use wander::{run, NoHostType};
 
 struct REPLState<T: Clone + PartialEq> {
     bindings: Bindings<T>,
 }
 
 fn main() -> Result<()> {
-    let bindings = common();
+    let bindings = common::<NoHostType>();
     let mut state = REPLState { bindings };
     println!("Welcome to Wander's REPL!");
     println!("Press Ctrl+C or Ctrl+D or enter `:q` to quit.");

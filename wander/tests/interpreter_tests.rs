@@ -5,7 +5,7 @@
 use wander::interpreter::eval;
 use wander::parser::Element;
 use wander::preludes::common;
-use wander::{WanderValue, NoHostType};
+use wander::{NoHostType, WanderValue};
 
 #[test]
 fn eval_boolean_true() {

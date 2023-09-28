@@ -6,14 +6,16 @@
 
 mod utils;
 
-use wander::{WanderError, WanderValue};
+use wander::{NoHostType, WanderError, WanderValue};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub fn run(script: String) -> JsValue {
-    let mut bindings = wander::preludes::common();
+    let mut bindings = wander::preludes::common::<NoHostType>();
     match wander::run(&script, &mut bindings) {
         Ok(value) => serde_wasm_bindgen::to_value(&value).unwrap(),
-        Err(err) => serde_wasm_bindgen::to_value(&Err::<WanderValue, WanderError>(err)).unwrap(),
+        Err(err) => {
+            serde_wasm_bindgen::to_value(&Err::<WanderValue<NoHostType>, WanderError>(err)).unwrap()
+        }
     }
 }

@@ -183,28 +183,33 @@ fn read_name<T: Clone + PartialEq + Display>(
     } else {
         match bindings.read_host_function(name) {
             Some(_) => Ok(WanderValue::HostedFunction(name.to_owned())),
-            None => read_field(name, bindings)
+            None => read_field(name, bindings),
         }
     }
 }
 
 fn read_field<T: Clone + PartialEq + Display>(
-    name: &String,
+    name: &str,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
-    let t = name.split('.').collect::<Vec<&str>>();
+    let t = name
+        .split('.')
+        .map(|e| e.to_string())
+        .collect::<Vec<String>>();
     let mut result = None;
     let (name, fields) = t.split_first().unwrap();
     if let Some(WanderValue::Record(value)) = bindings.read(&name.to_string()) {
         for field in fields {
             match result {
-                Some(WanderValue::Record(r)) => result = Some(r.get(field.clone()).unwrap().clone()),
-                Some(x) => return Err(WanderError(format!("Could not access field {field} in {x}."))),
-                None => {
-                    match value.get(field.clone()) {
-                        Some(r) => result = Some(r.clone()),
-                        None => return Err(WanderError(format!("Could not read field {name}"))),
-                    }
+                Some(WanderValue::Record(r)) => result = Some(r.get(field).unwrap().clone()),
+                Some(x) => {
+                    return Err(WanderError(format!(
+                        "Could not access field {field} in {x}."
+                    )))
+                }
+                None => match value.get(field) {
+                    Some(r) => result = Some(r.clone()),
+                    None => return Err(WanderError(format!("Could not read field {name}"))),
                 },
             }
         }
