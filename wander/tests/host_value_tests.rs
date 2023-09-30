@@ -7,7 +7,7 @@ use std::rc::Rc;
 use wander::interpreter::eval;
 use wander::parser::Element;
 use wander::preludes::common;
-use wander::{HostFunction, HostValue, WanderError, WanderType, WanderValue};
+use wander::{HostFunction, HostValue, WanderError, WanderType, WanderValue, HostFunctionBinding};
 
 struct SayHello {}
 impl HostFunction<String> for SayHello {
@@ -21,20 +21,13 @@ impl HostFunction<String> for SayHello {
         }))
     }
 
-    fn name(&self) -> String {
-        "hello".to_owned()
-    }
-
-    fn doc(&self) -> String {
-        "Say hello!".to_owned()
-    }
-
-    fn params(&self) -> Vec<WanderType> {
-        vec![]
-    }
-
-    fn returns(&self) -> WanderType {
-        WanderType::String
+    fn binding(&self) -> HostFunctionBinding {
+        HostFunctionBinding {
+            name: "hello".to_owned(),
+            parameters: vec![],
+            result: WanderType::String,
+            doc_string: "Say hello!".to_owned(),
+        }
     }
 }
 

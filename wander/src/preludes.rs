@@ -21,28 +21,12 @@ impl<T: Clone + PartialEq> HostFunction<T> for EqFunction {
         }
     }
 
-    // fn doc(&self) -> String {
-    //     "Check if two values are equal.".to_owned()
-    // }
-
-    // fn params(&self) -> Vec<crate::WanderType> {
-    //     vec![WanderType::Any, WanderType::Any]
-    // }
-
-    // fn returns(&self) -> crate::WanderType {
-    //     WanderType::Any
-    // }
-
-    // fn name(&self) -> String {
-    //     "Core.eq".to_owned()
-    // }
-
     fn binding(&self) -> HostFunctionBinding {
         HostFunctionBinding {
-            name: todo!(),
-            parameters: todo!(),
-            result: todo!(),
-            doc_string: todo!(),
+            name: "Core.eq".to_owned(),
+            parameters: vec![WanderType::Any, WanderType::Any],
+            result: WanderType::Any,
+            doc_string: "Check if two values are equal.".to_owned(),
         }
     }
 }
@@ -67,28 +51,12 @@ impl<T: Clone + PartialEq> HostFunction<T> for AssertEqFunction {
         }
     }
 
-    // fn doc(&self) -> String {
-    //     "Assert that two values are equal.".to_owned()
-    // }
-
-    // fn params(&self) -> Vec<crate::WanderType> {
-    //     vec![WanderType::Any, WanderType::Any]
-    // }
-
-    // fn returns(&self) -> crate::WanderType {
-    //     WanderType::Nothing
-    // }
-
-    // fn name(&self) -> String {
-    //     "Assert.assertEq".to_owned()
-    // }
-
     fn binding(&self) -> HostFunctionBinding {
         HostFunctionBinding {
-            name: todo!(),
-            parameters: todo!(),
-            result: todo!(),
-            doc_string: todo!(),
+            name: "Assert.assertEq".to_owned(),
+            parameters: vec![WanderType::Any, WanderType::Any],
+            result: WanderType::Nothing,
+            doc_string: "Assert that two values are equal.".to_owned(),
         }
     }
 }
@@ -109,28 +77,12 @@ impl<T: Clone + PartialEq> HostFunction<T> for AndFunction {
         }
     }
 
-    // fn doc(&self) -> String {
-    //     "Check if two boolean values are both true.".to_owned()
-    // }
-
-    // fn params(&self) -> Vec<crate::WanderType> {
-    //     vec![WanderType::Boolean, WanderType::Boolean]
-    // }
-
-    // fn returns(&self) -> crate::WanderType {
-    //     WanderType::Boolean
-    // }
-
-    // fn name(&self) -> String {
-    //     "Bool.and".to_owned()
-    // }
-
     fn binding(&self) -> HostFunctionBinding {
         HostFunctionBinding {
-            name: todo!(),
-            parameters: todo!(),
-            result: todo!(),
-            doc_string: todo!(),
+            name: "Bool.and".to_owned(),
+            parameters: vec![WanderType::Boolean, WanderType::Boolean],
+            result: WanderType::Boolean,
+            doc_string: "Check if two boolean values are both true.".to_owned(),
         }
     }
 }
@@ -151,28 +103,12 @@ impl<T: Clone + PartialEq> HostFunction<T> for NotFunction {
         }
     }
 
-    // fn doc(&self) -> String {
-    //     "Return the opposite of the boolean value passed.".to_owned()
-    // }
-
-    // fn params(&self) -> Vec<crate::WanderType> {
-    //     vec![WanderType::Boolean]
-    // }
-
-    // fn returns(&self) -> crate::WanderType {
-    //     WanderType::Boolean
-    // }
-
-    // fn name(&self) -> String {
-    //     "Bool.not".to_owned()
-    // }
-
     fn binding(&self) -> HostFunctionBinding {
         HostFunctionBinding {
-            name: todo!(),
-            parameters: todo!(),
-            result: todo!(),
-            doc_string: todo!(),
+            name: "Bool.not".to_owned(),
+            parameters: vec![WanderType::Boolean],
+            result: WanderType::Boolean,
+            doc_string: "Return the opposite of the boolean value passed.".to_owned(),
         }
     }
 }
