@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::{bindings::Bindings, HostFunction, WanderError, WanderType, WanderValue};
+use crate::{bindings::Bindings, HostFunction, WanderError, WanderType, WanderValue, HostFunctionBinding};
 use std::rc::Rc;
 
 struct EqFunction {}
@@ -21,20 +21,29 @@ impl<T: Clone + PartialEq> HostFunction<T> for EqFunction {
         }
     }
 
-    fn doc(&self) -> String {
-        "Check if two values are equal.".to_owned()
-    }
+    // fn doc(&self) -> String {
+    //     "Check if two values are equal.".to_owned()
+    // }
 
-    fn params(&self) -> Vec<crate::WanderType> {
-        vec![WanderType::Any, WanderType::Any]
-    }
+    // fn params(&self) -> Vec<crate::WanderType> {
+    //     vec![WanderType::Any, WanderType::Any]
+    // }
 
-    fn returns(&self) -> crate::WanderType {
-        WanderType::Any
-    }
+    // fn returns(&self) -> crate::WanderType {
+    //     WanderType::Any
+    // }
 
-    fn name(&self) -> String {
-        "Core.eq".to_owned()
+    // fn name(&self) -> String {
+    //     "Core.eq".to_owned()
+    // }
+
+    fn binding(&self) -> HostFunctionBinding {
+        HostFunctionBinding {
+            name: todo!(),
+            parameters: todo!(),
+            result: todo!(),
+            doc_string: todo!(),
+        }
     }
 }
 
@@ -58,20 +67,29 @@ impl<T: Clone + PartialEq> HostFunction<T> for AssertEqFunction {
         }
     }
 
-    fn doc(&self) -> String {
-        "Assert that two values are equal.".to_owned()
-    }
+    // fn doc(&self) -> String {
+    //     "Assert that two values are equal.".to_owned()
+    // }
 
-    fn params(&self) -> Vec<crate::WanderType> {
-        vec![WanderType::Any, WanderType::Any]
-    }
+    // fn params(&self) -> Vec<crate::WanderType> {
+    //     vec![WanderType::Any, WanderType::Any]
+    // }
 
-    fn returns(&self) -> crate::WanderType {
-        WanderType::Nothing
-    }
+    // fn returns(&self) -> crate::WanderType {
+    //     WanderType::Nothing
+    // }
 
-    fn name(&self) -> String {
-        "Assert.assertEq".to_owned()
+    // fn name(&self) -> String {
+    //     "Assert.assertEq".to_owned()
+    // }
+
+    fn binding(&self) -> HostFunctionBinding {
+        HostFunctionBinding {
+            name: todo!(),
+            parameters: todo!(),
+            result: todo!(),
+            doc_string: todo!(),
+        }
     }
 }
 
@@ -91,20 +109,29 @@ impl<T: Clone + PartialEq> HostFunction<T> for AndFunction {
         }
     }
 
-    fn doc(&self) -> String {
-        "Check if two boolean values are both true.".to_owned()
-    }
+    // fn doc(&self) -> String {
+    //     "Check if two boolean values are both true.".to_owned()
+    // }
 
-    fn params(&self) -> Vec<crate::WanderType> {
-        vec![WanderType::Boolean, WanderType::Boolean]
-    }
+    // fn params(&self) -> Vec<crate::WanderType> {
+    //     vec![WanderType::Boolean, WanderType::Boolean]
+    // }
 
-    fn returns(&self) -> crate::WanderType {
-        WanderType::Boolean
-    }
+    // fn returns(&self) -> crate::WanderType {
+    //     WanderType::Boolean
+    // }
 
-    fn name(&self) -> String {
-        "Bool.and".to_owned()
+    // fn name(&self) -> String {
+    //     "Bool.and".to_owned()
+    // }
+
+    fn binding(&self) -> HostFunctionBinding {
+        HostFunctionBinding {
+            name: todo!(),
+            parameters: todo!(),
+            result: todo!(),
+            doc_string: todo!(),
+        }
     }
 }
 
@@ -124,139 +151,32 @@ impl<T: Clone + PartialEq> HostFunction<T> for NotFunction {
         }
     }
 
-    fn doc(&self) -> String {
-        "Return the opposite of the boolean value passed.".to_owned()
-    }
+    // fn doc(&self) -> String {
+    //     "Return the opposite of the boolean value passed.".to_owned()
+    // }
 
-    fn params(&self) -> Vec<crate::WanderType> {
-        vec![WanderType::Boolean]
-    }
+    // fn params(&self) -> Vec<crate::WanderType> {
+    //     vec![WanderType::Boolean]
+    // }
 
-    fn returns(&self) -> crate::WanderType {
-        WanderType::Boolean
-    }
+    // fn returns(&self) -> crate::WanderType {
+    //     WanderType::Boolean
+    // }
 
-    fn name(&self) -> String {
-        "Bool.not".to_owned()
-    }
-}
+    // fn name(&self) -> String {
+    //     "Bool.not".to_owned()
+    // }
 
-struct EntityFunction {}
-impl<T: Clone + PartialEq> HostFunction<T> for EntityFunction {
-    fn run(
-        &self,
-        arguments: &[WanderValue<T>],
-        _bindings: &Bindings<T>,
-    ) -> Result<WanderValue<T>, WanderError> {
-        if let [WanderValue::Tuple(value)] = arguments {
-            if value.len() == 3 {
-                Ok(value.get(0).unwrap().clone())
-            } else {
-                Err(WanderError(
-                    "`entity` function requires one Statement parameter.".to_owned(),
-                ))
-            }
-        } else {
-            Err(WanderError(
-                "`entity` function requires one Statement parameter.".to_owned(),
-            ))
+    fn binding(&self) -> HostFunctionBinding {
+        HostFunctionBinding {
+            name: todo!(),
+            parameters: todo!(),
+            result: todo!(),
+            doc_string: todo!(),
         }
     }
-
-    fn doc(&self) -> String {
-        "Retrieve the Entity from a Statement.".to_owned()
-    }
-
-    fn params(&self) -> Vec<crate::WanderType> {
-        vec![WanderType::Tuple]
-    }
-
-    fn returns(&self) -> crate::WanderType {
-        WanderType::Identifier
-    }
-
-    fn name(&self) -> String {
-        "Statement.entity".to_owned()
-    }
 }
 
-struct AttributeFunction {}
-impl<T: Clone + PartialEq> HostFunction<T> for AttributeFunction {
-    fn run(
-        &self,
-        arguments: &[WanderValue<T>],
-        _bindings: &Bindings<T>,
-    ) -> Result<WanderValue<T>, WanderError> {
-        if let [WanderValue::List(value)] = arguments {
-            if value.len() == 3 {
-                Ok(value.get(1).unwrap().clone())
-            } else {
-                Err(WanderError(
-                    "`attribute` function requires one Statement parameter.".to_owned(),
-                ))
-            }
-        } else {
-            Err(WanderError(
-                "`attribute` function requires one Statement parameter.".to_owned(),
-            ))
-        }
-    }
-
-    fn doc(&self) -> String {
-        "Retrieve the Attribute from a Statement.".to_owned()
-    }
-
-    fn params(&self) -> Vec<crate::WanderType> {
-        vec![WanderType::Tuple]
-    }
-
-    fn returns(&self) -> crate::WanderType {
-        WanderType::Identifier
-    }
-
-    fn name(&self) -> String {
-        "Statement.attribute".to_owned()
-    }
-}
-
-struct ValueFunction {}
-impl<T: Clone + PartialEq> HostFunction<T> for ValueFunction {
-    fn run(
-        &self,
-        arguments: &[WanderValue<T>],
-        _bindings: &Bindings<T>,
-    ) -> Result<WanderValue<T>, WanderError> {
-        if let [WanderValue::List(value)] = arguments {
-            if value.len() == 3 {
-                Ok(value.get(2).unwrap().clone())
-            } else {
-                Err(WanderError(
-                    "`value` function requires one Statement parameter.".to_owned(),
-                ))
-            }
-        } else {
-            Err(WanderError(
-                "`value` function requires one Statement parameter.".to_owned(),
-            ))
-        }
-    }
-
-    fn doc(&self) -> String {
-        "Retrieve the Value from a Statement.".to_owned()
-    }
-
-    fn params(&self) -> Vec<crate::WanderType> {
-        vec![WanderType::Tuple]
-    }
-
-    fn returns(&self) -> crate::WanderType {
-        WanderType::Value
-    }
-
-    fn name(&self) -> String {
-        "Statement.value".to_owned()
-    }
-}
 
 struct AtFunction {}
 impl<T: Clone + PartialEq> HostFunction<T> for AtFunction {
@@ -281,20 +201,13 @@ impl<T: Clone + PartialEq> HostFunction<T> for AtFunction {
         }
     }
 
-    fn doc(&self) -> String {
-        "Get the value at a given location.".to_owned()
-    }
-
-    fn params(&self) -> Vec<crate::WanderType> {
-        vec![WanderType::Int, WanderType::List]
-    }
-
-    fn returns(&self) -> crate::WanderType {
-        WanderType::Any
-    }
-
-    fn name(&self) -> String {
-        "List.at".to_owned()
+    fn binding(&self) -> HostFunctionBinding {
+        HostFunctionBinding { 
+            name: "List.at".to_owned(), 
+            parameters: vec![WanderType::Int, WanderType::List],
+            result: WanderType::Any, 
+            doc_string: "Get the value at a given location.".to_owned() 
+        }
     }
 }
 
@@ -364,10 +277,6 @@ pub fn common<T: Clone + PartialEq>() -> Bindings<T> {
 
     bindings.bind_host_function(Rc::new(AndFunction {}));
     bindings.bind_host_function(Rc::new(NotFunction {}));
-
-    bindings.bind_host_function(Rc::new(EntityFunction {}));
-    bindings.bind_host_function(Rc::new(AttributeFunction {}));
-    bindings.bind_host_function(Rc::new(ValueFunction {}));
 
     bindings.bind_host_function(Rc::new(AtFunction {}));
 

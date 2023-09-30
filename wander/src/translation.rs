@@ -4,6 +4,7 @@
 
 use crate::{parser::Element, WanderError};
 
+/// Handle any tranlations needed before evaluating the AST.
 pub fn translate(elements: Vec<Element>) -> Result<Vec<Element>, WanderError> {
     process_forwards(elements)
 }

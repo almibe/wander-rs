@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{lexer::Token, WanderError};
 
+#[doc(hidden)]
 #[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
 pub enum Element {
     Boolean(bool),
@@ -274,6 +275,7 @@ fn elements(gaze: &mut Gaze<Token>) -> Option<Vec<Element>> {
     Some(results)
 }
 
+/// Parse a sequence of Tokens into an AST.
 pub fn parse(tokens: Vec<Token>) -> Result<Vec<Element>, WanderError> {
     let mut gaze = Gaze::from_vec(tokens);
     match gaze.attemptf(&mut elements) {

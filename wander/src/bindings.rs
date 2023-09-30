@@ -2,13 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::{HostFunction, TokenTransformer, WanderType, WanderValue};
+use crate::{HostFunction, TokenTransformer, WanderType, WanderValue, HostFunctionBinding};
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
     rc::Rc,
 };
 
+/// A structure used to setup the environment a Wander program is executed in.
 #[derive(Default)]
 pub struct Bindings<T: Clone> {
     token_transformers: RefCell<HashMap<String, Rc<TokenTransformer>>>,
@@ -16,18 +17,13 @@ pub struct Bindings<T: Clone> {
     scopes: Vec<HashMap<String, WanderValue<T>>>,
 }
 
-pub struct EnvironmentBinding {
-    pub name: String,
-    pub parameters: Vec<WanderType>,
-    pub result: WanderType,
-    pub doc_string: String,
-}
-
-pub trait BindingsProvider<T: Clone> {
-    fn add_bindings(&self, bindings: &mut Bindings<T>);
-}
+/// 
+// pub trait BindingsProvider<T: Clone> {
+//     fn add_bindings(&self, bindings: &mut Bindings<T>);
+// }
 
 impl<T: Clone + PartialEq> Bindings<T> {
+    /// Create a new empty Bindings.
     pub fn new() -> Bindings<T> {
         Bindings {
             token_transformers: RefCell::new(HashMap::new()),
@@ -36,14 +32,17 @@ impl<T: Clone + PartialEq> Bindings<T> {
         }
     }
 
+    /// Add a new Scope to these Bindings.
     pub fn add_scope(&mut self) {
         self.scopes.push(HashMap::new());
     }
 
+    /// Remove the current Scope from these Bindings.
     pub fn remove_scope(&mut self) {
         self.scopes.pop();
     }
 
+    /// Read a bound Value.
     pub fn read(&self, name: &String) -> Option<WanderValue<T>> {
         let mut index = self.scopes.len();
         while index > 0 {
@@ -60,17 +59,20 @@ impl<T: Clone + PartialEq> Bindings<T> {
         None
     }
 
+    /// Bind a new Value in this Scope.
     pub fn bind(&mut self, name: String, value: WanderValue<T>) {
         let mut current_scope = self.scopes.pop().unwrap();
         current_scope.insert(name, value);
         self.scopes.push(current_scope);
     }
 
+    /// Add a new HostFunction.
     pub fn bind_host_function(&mut self, function: Rc<dyn HostFunction<T>>) {
-        let full_name = function.name().to_string();
+        let full_name = function.binding().name.to_string();
         self.host_functions.borrow_mut().insert(full_name, function);
     }
 
+    /// Read a HostFunction.
     pub fn read_host_function(&self, name: &String) -> Option<Rc<dyn HostFunction<T>>> {
         match self.host_functions.borrow().get(name) {
             None => None,
@@ -78,6 +80,7 @@ impl<T: Clone + PartialEq> Bindings<T> {
         }
     }
 
+    /// Add a Token Transformer.
     pub fn bind_token_transformer(
         &mut self,
         module: String,
@@ -90,10 +93,12 @@ impl<T: Clone + PartialEq> Bindings<T> {
             .insert(full_name, transformer);
     }
 
+    /// Read a Token Transformer.
     pub fn read_token_transformer(&self, name: &String) -> Option<Rc<TokenTransformer>> {
         self.token_transformers.borrow().get(name).cloned()
     }
 
+    /// Get a collection of all names.
     pub fn bound_names(&self) -> HashSet<String> {
         let mut names = HashSet::new();
         for native_function in self.host_functions.borrow().keys() {
@@ -107,17 +112,7 @@ impl<T: Clone + PartialEq> Bindings<T> {
         names
     }
 
-    pub fn environment(&self) -> Vec<EnvironmentBinding> {
-        let mut env_bindings = Vec::new();
-        for native_function in self.host_functions.borrow().iter() {
-            let binding = EnvironmentBinding {
-                name: native_function.0.to_owned(),
-                doc_string: native_function.1.doc(),
-                parameters: native_function.1.params(),
-                result: native_function.1.returns(),
-            };
-            env_bindings.push(binding);
-        }
-        env_bindings
+    pub fn environment(&self) -> Vec<HostFunctionBinding> {
+        todo!()
     }
 }

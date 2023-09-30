@@ -277,7 +277,7 @@ fn call_function<T: Clone + Display + PartialEq>(
                 match bindings.read_host_function(&function_name) {
                     None => Err(WanderError(format!("Function {} is not defined.", name))),
                     Some(function) => {
-                        if args.len() == function.params().len() {
+                        if args.len() == function.binding().parameters.len() {
                             function.run(&args, bindings)
                         } else {
                             Ok(WanderValue::PartialApplication(Box::new(
@@ -319,7 +319,7 @@ fn call_function<T: Clone + Display + PartialEq>(
         None => match bindings.read_host_function(name) {
             None => Err(WanderError(format!("Function {} is not defined.", name))),
             Some(function) => {
-                if argument_values.len() == function.params().len() {
+                if argument_values.len() == function.binding().parameters.len() {
                     function.run(&argument_values, bindings)
                 } else {
                     Ok(WanderValue::PartialApplication(Box::new(

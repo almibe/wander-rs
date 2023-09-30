@@ -2,7 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//! This module is an implementation of the Wander scripting language.
+//! This module is an implementation of the Wander language.
+
+#![deny(missing_docs)]
 
 use std::{
     collections::HashMap,
@@ -16,13 +18,20 @@ use parser::{parse, Element};
 use serde::{Deserialize, Serialize};
 use translation::translate;
 
+#[doc(hidden)]
 pub mod bindings;
+#[doc(hidden)]
 pub mod interpreter;
+#[doc(hidden)]
 pub mod lexer;
+#[doc(hidden)]
 pub mod parser;
+#[doc(hidden)]
 pub mod preludes;
+#[doc(hidden)]
 pub mod translation;
 
+/// An error that occurs while running a Wander script.
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct WanderError(pub String);
 
@@ -36,69 +45,111 @@ impl Display for NoHostType {
     }
 }
 
+/// Data for 
+pub struct HostFunctionBinding {
+    /// Name used to bind this HostFunction including Namespaces.
+    pub name: String,
+    /// The type of the parameters this HostFunction takes.
+    pub parameters: Vec<WanderType>,
+    /// The type of the result of this HostFunction.
+    pub result: WanderType,
+    /// The documentation for this HostFunction.
+    /// Can be text or Markdown.
+    pub doc_string: String,
+}
+
+/// A trait representing a function exported from the hosting application that
+/// can be called from Wander.
 pub trait HostFunction<T: Clone + PartialEq> {
+    /// The function called when the HostFunction is called from Wander.
     fn run(
         &self,
         arguments: &[WanderValue<T>],
         bindings: &Bindings<T>,
     ) -> Result<WanderValue<T>, WanderError>;
-    fn name(&self) -> String;
-    fn doc(&self) -> String;
-    fn params(&self) -> Vec<WanderType>;
-    fn returns(&self) -> WanderType;
+    /// Get the binding information for this HostFunction.
+    fn binding(&self) -> HostFunctionBinding;
 }
 
+/// Type alias used for TokenTransformers.
 pub type TokenTransformer = fn(&[Token]) -> Result<Vec<Token>, WanderError>;
 
+/// Types of values allowed in Wander.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum WanderType {
+    /// Allow any type.
     Any,
-    Value, // String | Int | Identifier
+    /// A Boolean value.
     Boolean,
+    /// A signed 64-bit Integer.
     Int,
+    /// A String value.
     String,
-    Identifier,
+    /// The nothing value.
     Nothing,
     /// A named reference to a NativeFunction.
     HostFunction,
+    /// A Lambda.
     Lambda,
+    /// A List.
     List,
+    /// A tuple.
     Tuple,
-    Graph,
+    /// An Optional Value.
     Optional(Box<WanderType>),
 }
 
+/// A value of a type provided by the host application that can be accessed via Wander.
+/// Note it cannot be accessed by Wander directly, only through HostFunctions.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct HostValue<T> {
+    /// The value passed to Wander.
+    /// Note it cannot be accessed by Wander directly, only through HostFunctions.
     pub value: T,
 }
 
+/// Values in Wander programs used for Wander's implementation and interfacing between
+/// Wander and the host application.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub enum WanderValue<T: Clone> {
+    /// A Boolean value.
     Boolean(bool),
+    /// An Integer value.
     Int(i64),
+    /// A String value.
     String(String),
+    /// The nothing value.
     Nothing,
     /// A named reference to a HostedFunction.
     HostedFunction(String),
+    /// A Lambda.
     Lambda(Vec<String>, Vec<Element>),
+    /// A ParitalApplication.
     PartialApplication(Box<PartialApplication<T>>),
+    /// A List.
     List(Vec<WanderValue<T>>),
+    /// A Tuple.
     Tuple(Vec<WanderValue<T>>),
+    /// A Record.
     Record(HashMap<String, WanderValue<T>>),
+    /// A HostValue.
     HostValue(HostValue<T>),
 }
 
+/// A struct represting a partially applied function.
+/// The function can be a Lambda or a HostFunction.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct PartialApplication<T: Clone> {
     arguments: Vec<WanderValue<T>>,
     callee: WanderValue<T>,
 }
 
+/// Write integer.
 pub fn write_integer(integer: &i64) -> String {
     format!("{}", integer)
 }
 
+/// Write float.
 pub fn write_float(float: &f64) -> String {
     let res = format!("{}", float);
     if res.contains('.') {
@@ -108,10 +159,12 @@ pub fn write_float(float: &f64) -> String {
     }
 }
 
+// Encode a 
 // pub fn write_bytes(bytes: &Bytes) -> String {
 //     format!("0x{}", encode(bytes))
 // }
 
+/// Escape a String value.
 pub fn write_string(string: &str) -> String {
     //TODO this could be done better
     let escaped_string = string
@@ -184,6 +237,7 @@ impl<T: Clone + Display + PartialEq> Display for WanderValue<T> {
     }
 }
 
+/// Run a Wander script with the given Bindings.
 pub fn run<T: Clone + Display + PartialEq>(
     script: &str,
     bindings: &mut Bindings<T>,
