@@ -6,7 +6,7 @@
 //! It is an application that .
 
 use rustyline::error::ReadlineError;
-use rustyline::{Editor, Result};
+use rustyline::{DefaultEditor, Result};
 use tabled::{
     settings::{object::Rows, Modify, Width},
     Table, Tabled,
@@ -26,7 +26,7 @@ fn main() -> Result<()> {
     println!("Press Ctrl+C or Ctrl+D or enter `:q` to quit.");
     println!("Enter :help or :h for help.");
     println!("---");
-    let mut rl = Editor::<()>::new()?;
+    let mut rl = DefaultEditor::new()?;
     if rl.load_history("history.txt").is_err() {
         println!("No previous history.");
     }
@@ -34,7 +34,7 @@ fn main() -> Result<()> {
         let readline = rl.readline("> ");
         match readline {
             Ok(line) => {
-                rl.add_history_entry(line.as_str());
+                rl.add_history_entry(line.as_str())?;
                 if line.trim().starts_with(':') {
                     if !handle_command(&line, &mut state) {
                         break;
