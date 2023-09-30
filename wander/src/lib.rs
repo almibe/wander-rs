@@ -45,7 +45,7 @@ impl Display for NoHostType {
     }
 }
 
-/// Data for 
+/// Data for
 pub struct HostFunctionBinding {
     /// Name used to bind this HostFunction including Namespaces.
     pub name: String,
@@ -159,7 +159,7 @@ pub fn write_float(float: &f64) -> String {
     }
 }
 
-// Encode a 
+// Encode a
 // pub fn write_bytes(bytes: &Bytes) -> String {
 //     format!("0x{}", encode(bytes))
 // }

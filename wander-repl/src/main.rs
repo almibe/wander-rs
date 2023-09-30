@@ -5,17 +5,15 @@
 //! This module is the main module for the ligature-repl project.
 //! It is an application that .
 
-#![deny(missing_docs)]
-
 use rustyline::error::ReadlineError;
 use rustyline::{Editor, Result};
 use tabled::{
     settings::{object::Rows, Modify, Width},
     Table, Tabled,
 };
-use wander::bindings::{Bindings, EnvironmentBinding};
+use wander::bindings::Bindings;
 use wander::preludes::common;
-use wander::{run, NoHostType};
+use wander::{run, HostFunctionBinding, NoHostType};
 
 struct REPLState<T: Clone + PartialEq> {
     bindings: Bindings<T>,
@@ -125,21 +123,16 @@ fn quit() -> bool {
     false
 }
 
-///
 #[derive(PartialEq, Eq, PartialOrd, Ord, Tabled)]
 pub struct EnvironmentDisplay {
-    ///
     pub name: String,
-    ///
     pub parameters: String,
-    ///
     pub result: String,
-    ///
     pub doc_string: String,
 }
 
-impl From<EnvironmentBinding> for EnvironmentDisplay {
-    fn from(value: EnvironmentBinding) -> Self {
+impl From<HostFunctionBinding> for EnvironmentDisplay {
+    fn from(value: HostFunctionBinding) -> Self {
         EnvironmentDisplay {
             name: value.name,
             parameters: format!("{:?}", value.parameters),

@@ -2,7 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::{bindings::Bindings, HostFunction, WanderError, WanderType, WanderValue, HostFunctionBinding};
+use crate::{
+    bindings::Bindings, HostFunction, HostFunctionBinding, WanderError, WanderType, WanderValue,
+};
 use std::rc::Rc;
 
 struct EqFunction {}
@@ -113,7 +115,6 @@ impl<T: Clone + PartialEq> HostFunction<T> for NotFunction {
     }
 }
 
-
 struct AtFunction {}
 impl<T: Clone + PartialEq> HostFunction<T> for AtFunction {
     fn run(
@@ -138,11 +139,11 @@ impl<T: Clone + PartialEq> HostFunction<T> for AtFunction {
     }
 
     fn binding(&self) -> HostFunctionBinding {
-        HostFunctionBinding { 
-            name: "List.at".to_owned(), 
+        HostFunctionBinding {
+            name: "List.at".to_owned(),
             parameters: vec![WanderType::Int, WanderType::List],
-            result: WanderType::Any, 
-            doc_string: "Get the value at a given location.".to_owned() 
+            result: WanderType::Any,
+            doc_string: "Get the value at a given location.".to_owned(),
         }
     }
 }

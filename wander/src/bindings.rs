@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::{HostFunction, TokenTransformer, WanderType, WanderValue, HostFunctionBinding};
+use crate::{HostFunction, HostFunctionBinding, TokenTransformer, WanderValue};
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
@@ -17,7 +17,7 @@ pub struct Bindings<T: Clone> {
     scopes: Vec<HashMap<String, WanderValue<T>>>,
 }
 
-/// 
+///
 // pub trait BindingsProvider<T: Clone> {
 //     fn add_bindings(&self, bindings: &mut Bindings<T>);
 // }
