@@ -17,7 +17,6 @@ If you are interested in building this project, see https://rustwasm.github.io/ 
 wasm-pack build
 wasm-pack build --target web
 wasm-pack test --headless --firefox
-wasm-pack publish
 ```
 
 ## Publishing
