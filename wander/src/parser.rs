@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use gaze::Gaze;
 use serde::{Deserialize, Serialize};
 
-use crate::{lexer::Token, WanderError};
+use crate::{lexer::Token, WanderError, WanderType};
 
 #[doc(hidden)]
 #[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
@@ -20,7 +20,8 @@ pub enum Element {
     FunctionCall(String, Vec<Element>),
     Scope(Vec<Element>),
     Conditional(Box<Element>, Box<Element>, Box<Element>),
-    Lambda(Vec<String>, Vec<Element>),
+    DeprecatedLambda(Vec<String>, Vec<Element>),
+    Lambda(String, WanderType, WanderType, Box<Element>),
     Tuple(Vec<Element>),
     List(Vec<Element>),
     Record(HashMap<String, Element>),
@@ -142,6 +143,26 @@ fn conditional(gaze: &mut Gaze<Token>) -> Option<Element> {
 
 fn lambda(gaze: &mut Gaze<Token>) -> Option<Element> {
     match gaze.next() {
+        Some(Token::Lambda) => (),
+        _ => return None,
+    }
+
+    let name = match gaze.attemptf(&mut element) {
+        Some(Element::Name(name)) => name,
+        _ => return None,
+    };
+
+    match gaze.next() {
+        Some(Token::Arrow) => (),
+        _ => return None,
+    }
+
+    gaze.attemptf(&mut element)
+        .map(|element| Element::Lambda(name, WanderType::Any, WanderType::Any, Box::new(element)))
+}
+
+fn deprecated_lambda(gaze: &mut Gaze<Token>) -> Option<Element> {
+    match gaze.next() {
         Some(Token::OpenBrace) => (),
         _ => return None,
     }
@@ -166,7 +187,7 @@ fn lambda(gaze: &mut Gaze<Token>) -> Option<Element> {
     }
 
     match gaze.next() {
-        Some(Token::CloseBrace) => Some(Element::Lambda(names, body)),
+        Some(Token::CloseBrace) => Some(Element::DeprecatedLambda(names, body)),
         _ => None,
     }
 }
@@ -253,6 +274,7 @@ fn element(gaze: &mut Gaze<Token>) -> Option<Element> {
         scope,
         conditional,
         lambda,
+        deprecated_lambda,
         list,
     ];
     for &mut mut parser in parsers.iter_mut() {

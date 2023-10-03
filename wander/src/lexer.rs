@@ -77,6 +77,12 @@ pub enum Token {
 
     #[regex("--.*\n?")]
     Comment,
+
+    #[token("\\")]
+    Lambda,
+
+    #[token("fun")]
+    Fun,
 }
 
 fn bool(lex: &mut Lexer<Token>) -> Option<bool> {

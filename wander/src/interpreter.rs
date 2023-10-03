@@ -8,7 +8,7 @@ use std::fmt::Display;
 
 use crate::bindings::Bindings;
 use crate::parser::Element;
-use crate::{PartialApplication, WanderError, WanderValue};
+use crate::{PartialApplication, WanderError, WanderType, WanderValue};
 
 pub fn eval<T: Clone + Display + PartialEq>(
     script: &Vec<Element>,
@@ -34,12 +34,13 @@ pub fn eval_element<T: Clone + Display + PartialEq>(
         Element::FunctionCall(name, arguments) => call_function(name, arguments, bindings),
         Element::Scope(body) => handle_scope(body, bindings),
         Element::Conditional(c, i, e) => handle_conditional(c, i, e, bindings),
-        Element::Lambda(params, body) => handle_lambda(params, body),
+        Element::DeprecatedLambda(params, body) => deprecated_handle_lambda(params, body),
         Element::List(values) => handle_list(values, bindings),
         Element::Nothing => Ok(WanderValue::Nothing),
         Element::Forward => panic!("Should never reach."),
         Element::Tuple(values) => handle_tuple(values, bindings),
         Element::Record(values) => handle_record(values, bindings),
+        Element::Lambda(name, input, output, body) => handle_lambda(name, input, output, body),
     }
 }
 
@@ -128,11 +129,28 @@ fn handle_list<T: Clone + Display + PartialEq>(
     Ok(WanderValue::List(results))
 }
 
-fn handle_lambda<T: Clone + PartialEq>(
+fn deprecated_handle_lambda<T: Clone + PartialEq>(
     params: &Vec<String>,
     body: &Vec<Element>,
 ) -> Result<WanderValue<T>, WanderError> {
-    Ok(WanderValue::Lambda(params.to_owned(), body.to_owned()))
+    Ok(WanderValue::DeprecatedLambda(
+        params.to_owned(),
+        body.to_owned(),
+    ))
+}
+
+fn handle_lambda<T: Clone + PartialEq>(
+    name: &String,
+    input: &WanderType,
+    output: &WanderType,
+    body: &Box<Element>,
+) -> Result<WanderValue<T>, WanderError> {
+    Ok(WanderValue::Lambda(
+        name.clone(),
+        input.clone(),
+        output.clone(),
+        body.clone(),
+    ))
 }
 
 fn handle_conditional<T: Clone + Display + PartialEq>(
@@ -242,7 +260,7 @@ fn call_function<T: Clone + Display + PartialEq>(
                 )),
             }
         }
-        Some(WanderValue::Lambda(parameters, body)) => {
+        Some(WanderValue::DeprecatedLambda(parameters, body)) => {
             match parameters.len().cmp(&arguments.len()) {
                 Ordering::Equal => {
                     bindings.add_scope();
@@ -265,7 +283,7 @@ fn call_function<T: Clone + Display + PartialEq>(
                 Ordering::Greater => Ok(WanderValue::PartialApplication(Box::new(
                     PartialApplication {
                         arguments: argument_values,
-                        callee: WanderValue::Lambda(parameters, body),
+                        callee: WanderValue::DeprecatedLambda(parameters, body),
                     },
                 ))),
             }
@@ -290,7 +308,7 @@ fn call_function<T: Clone + Display + PartialEq>(
                     }
                 }
             }
-            WanderValue::Lambda(parameters, body) => {
+            WanderValue::DeprecatedLambda(parameters, body) => {
                 let mut args = application.arguments.clone();
                 args.append(&mut argument_values.clone());
                 if parameters.len() == args.len() {
@@ -305,7 +323,7 @@ fn call_function<T: Clone + Display + PartialEq>(
                     Ok(WanderValue::PartialApplication(Box::new(
                         PartialApplication {
                             arguments: args,
-                            callee: WanderValue::Lambda(parameters, body),
+                            callee: WanderValue::DeprecatedLambda(parameters, body),
                         },
                     )))
                 }

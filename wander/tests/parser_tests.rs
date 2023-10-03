@@ -144,7 +144,7 @@ fn parse_lambda() {
         Token::CloseBrace,
     ];
     let res = parse(input);
-    let expected = Ok(vec![Element::Lambda(
+    let expected = Ok(vec![Element::DeprecatedLambda(
         vec!["test".to_owned()],
         vec![Element::Name("test".to_owned())],
     )]);

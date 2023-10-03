@@ -75,7 +75,7 @@ pub trait HostFunction<T: Clone + PartialEq> {
 pub type TokenTransformer = fn(&[Token]) -> Result<Vec<Token>, WanderError>;
 
 /// Types of values allowed in Wander.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum WanderType {
     /// Allow any type.
     Any,
@@ -122,8 +122,10 @@ pub enum WanderValue<T: Clone> {
     Nothing,
     /// A named reference to a HostedFunction.
     HostedFunction(String),
-    /// A Lambda.
-    Lambda(Vec<String>, Vec<Element>),
+    /// The old style of Lambda in Wander.
+    DeprecatedLambda(Vec<String>, Vec<Element>),
+    /// A Lambda
+    Lambda(String, WanderType, WanderType, Box<Element>),
     /// A ParitalApplication.
     PartialApplication(Box<PartialApplication<T>>),
     /// A List.
@@ -228,11 +230,12 @@ impl<T: Clone + Display + PartialEq> Display for WanderValue<T> {
             WanderValue::Nothing => write!(f, "nothing"),
             WanderValue::HostedFunction(_) => write!(f, "[function]"),
             WanderValue::List(contents) => write_list_or_tuple_wander_value('[', ']', contents, f),
-            WanderValue::Lambda(_, _) => write!(f, "[lambda]"),
+            WanderValue::DeprecatedLambda(_, _) => write!(f, "[lambda]"),
             WanderValue::HostValue(value) => write_host_value(value, f),
             WanderValue::Tuple(contents) => write_list_or_tuple_wander_value('(', ')', contents, f),
             WanderValue::Record(values) => write_record(values, f),
             WanderValue::PartialApplication(_) => write!(f, "[application]"),
+            WanderValue::Lambda(_, _, _, _) => todo!(),
         }
     }
 }
