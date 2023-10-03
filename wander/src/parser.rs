@@ -94,6 +94,34 @@ fn name(gaze: &mut Gaze<Token>) -> Option<Element> {
     }
 }
 
+fn let_scope(gaze: &mut Gaze<Token>) -> Option<Element> {
+    match gaze.next() {
+        Some(Token::Let) => (),
+        _ => return None,
+    }
+
+    let mut body = vec![];
+    while let Some(element) = gaze.attemptf(&mut val_binding) {
+        body.push(element);
+    }
+
+    match gaze.next() {
+        Some(Token::In) => (),
+        _ => return None,
+    }
+
+    if let Some(element) = gaze.attemptf(&mut element) {
+        body.push(element);
+    } else {
+        return None
+    }
+
+    match gaze.next() {
+        Some(Token::End) => Some(Element::Scope(body)),
+        _ => None,
+    }
+}
+
 fn scope(gaze: &mut Gaze<Token>) -> Option<Element> {
     match gaze.next() {
         Some(Token::OpenBrace) => (),
@@ -271,6 +299,7 @@ fn element(gaze: &mut Gaze<Token>) -> Option<Element> {
         int,
         string,
         val_binding,
+        let_scope,
         scope,
         conditional,
         lambda,
