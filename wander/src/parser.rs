@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use gaze::Gaze;
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use crate::{lexer::Token, WanderError, WanderType};
 
 #[doc(hidden)]
-#[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
 pub enum Element {
     Boolean(bool),
     Int(i64),
@@ -24,9 +24,16 @@ pub enum Element {
     Lambda(String, WanderType, WanderType, Box<Element>),
     Tuple(Vec<Element>),
     List(Vec<Element>),
+    Set(HashSet<Element>),
     Record(HashMap<String, Element>),
     Nothing,
     Forward,
+}
+
+impl core::hash::Hash for Element {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(self).hash(state);
+    }
 }
 
 fn boolean(gaze: &mut Gaze<Token>) -> Option<Element> {
@@ -261,6 +268,28 @@ fn record(gaze: &mut Gaze<Token>) -> Option<Element> {
     }
 }
 
+fn set(gaze: &mut Gaze<Token>) -> Option<Element> {
+    match gaze.next() {
+        Some(Token::Hash) => (),
+        _ => return None,
+    }
+
+    match gaze.next() {
+        Some(Token::OpenParen) => (),
+        _ => return None,
+    }
+
+    let mut contents = HashSet::new();
+    while let Some(e) = gaze.attemptf(&mut element) {
+        contents.insert(e);
+    }
+
+    match gaze.next() {
+        Some(Token::CloseParen) => Some(Element::Set(contents)),
+        _ => None,
+    }
+}
+
 fn tuple(gaze: &mut Gaze<Token>) -> Option<Element> {
     match gaze.next() {
         Some(Token::OpenParen) => (),
@@ -290,6 +319,7 @@ fn val_binding(gaze: &mut Gaze<Token>) -> Option<Element> {
 fn element(gaze: &mut Gaze<Token>) -> Option<Element> {
     let mut parsers = vec![
         tuple,
+        set,
         record,
         function_call,
         name,

@@ -11,7 +11,7 @@ use std::{
 
 /// A structure used to setup the environment a Wander program is executed in.
 #[derive(Default)]
-pub struct Bindings<T: Clone> {
+pub struct Bindings<T: Clone + PartialEq + Eq> {
     token_transformers: RefCell<HashMap<String, Rc<TokenTransformer>>>,
     host_functions: RefCell<HashMap<String, Rc<dyn HostFunction<T>>>>,
     scopes: Vec<HashMap<String, WanderValue<T>>>,
@@ -22,7 +22,7 @@ pub struct Bindings<T: Clone> {
 //     fn add_bindings(&self, bindings: &mut Bindings<T>);
 // }
 
-impl<T: Clone + PartialEq> Bindings<T> {
+impl<T: Clone + PartialEq + Eq> Bindings<T> {
     /// Create a new empty Bindings.
     pub fn new() -> Bindings<T> {
         Bindings {

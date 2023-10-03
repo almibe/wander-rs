@@ -84,6 +84,9 @@ pub enum Token {
     #[token("`")]
     Backtick,
 
+    #[token("#")]
+    Hash,
+
     #[regex("--.*\n?")]
     Comment,
 
@@ -132,7 +135,7 @@ pub fn tokenize(script: &str) -> Result<Vec<Token>, WanderError> {
     Ok(results)
 }
 
-pub fn transform<T: Clone + PartialEq>(
+pub fn transform<T: Clone + PartialEq + Eq>(
     input: &[Token],
     bindings: &Bindings<T>,
 ) -> Result<Vec<Token>, WanderError> {

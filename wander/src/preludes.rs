@@ -8,7 +8,7 @@ use crate::{
 use std::rc::Rc;
 
 struct EqFunction {}
-impl<T: Clone + PartialEq> HostFunction<T> for EqFunction {
+impl<T: Clone + PartialEq + Eq> HostFunction<T> for EqFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
@@ -34,7 +34,7 @@ impl<T: Clone + PartialEq> HostFunction<T> for EqFunction {
 }
 
 struct AssertEqFunction {}
-impl<T: Clone + PartialEq> HostFunction<T> for AssertEqFunction {
+impl<T: Clone + PartialEq + Eq> HostFunction<T> for AssertEqFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
@@ -64,7 +64,7 @@ impl<T: Clone + PartialEq> HostFunction<T> for AssertEqFunction {
 }
 
 struct AndFunction {}
-impl<T: Clone + PartialEq> HostFunction<T> for AndFunction {
+impl<T: Clone + PartialEq + Eq> HostFunction<T> for AndFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
@@ -90,7 +90,7 @@ impl<T: Clone + PartialEq> HostFunction<T> for AndFunction {
 }
 
 struct NotFunction {}
-impl<T: Clone + PartialEq> HostFunction<T> for NotFunction {
+impl<T: Clone + PartialEq + Eq> HostFunction<T> for NotFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
@@ -116,7 +116,7 @@ impl<T: Clone + PartialEq> HostFunction<T> for NotFunction {
 }
 
 struct AtFunction {}
-impl<T: Clone + PartialEq> HostFunction<T> for AtFunction {
+impl<T: Clone + PartialEq + Eq> HostFunction<T> for AtFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
@@ -206,7 +206,7 @@ impl<T: Clone + PartialEq> HostFunction<T> for AtFunction {
 
 /// Creates a set of Bindings for Wander that consists of all of the common
 /// functionality, but doesn't interact with an instance of Ligature.
-pub fn common<T: Clone + PartialEq>() -> Bindings<T> {
+pub fn common<T: Clone + PartialEq + Eq>() -> Bindings<T> {
     let mut bindings = Bindings::new();
     bindings.bind_host_function(Rc::new(EqFunction {}));
 

@@ -3,14 +3,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::cmp::Ordering;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 
 use crate::bindings::Bindings;
 use crate::parser::Element;
 use crate::{PartialApplication, WanderError, WanderType, WanderValue};
 
-pub fn eval<T: Clone + Display + PartialEq>(
+pub fn eval<T: Clone + Display + PartialEq + Eq>(
     script: &Vec<Element>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -21,7 +21,7 @@ pub fn eval<T: Clone + Display + PartialEq>(
     result
 }
 
-pub fn eval_element<T: Clone + Display + PartialEq>(
+pub fn eval_element<T: Clone + Display + PartialEq + Eq>(
     element: &Element,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -41,6 +41,7 @@ pub fn eval_element<T: Clone + Display + PartialEq>(
         Element::Tuple(values) => handle_tuple(values, bindings),
         Element::Record(values) => handle_record(values, bindings),
         Element::Lambda(name, input, output, body) => handle_lambda(name, input, output, body),
+        Element::Set(values) => handle_set(values, bindings),
     }
 }
 
@@ -87,7 +88,21 @@ fn unescape_string(value: String) -> String {
     result
 }
 
-fn handle_tuple<T: Clone + Display + PartialEq>(
+fn handle_set<T: Clone + Display + PartialEq + Eq>(
+    elements: &HashSet<Element>,
+    bindings: &mut Bindings<T>,
+) -> Result<WanderValue<T>, WanderError> {
+    let mut results = HashSet::new();
+    for element in elements {
+        match eval_element(element, bindings) {
+            Ok(value) => results.insert(value),
+            Err(err) => return Err(err),
+        };
+    }
+    Ok(WanderValue::Set(results))
+}
+
+fn handle_tuple<T: Clone + Display + PartialEq + Eq>(
     elements: &Vec<Element>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -101,7 +116,7 @@ fn handle_tuple<T: Clone + Display + PartialEq>(
     Ok(WanderValue::Tuple(results))
 }
 
-fn handle_record<T: Clone + Display + PartialEq>(
+fn handle_record<T: Clone + Display + PartialEq + Eq>(
     elements: &HashMap<String, Element>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -115,7 +130,7 @@ fn handle_record<T: Clone + Display + PartialEq>(
     Ok(WanderValue::Record(results))
 }
 
-fn handle_list<T: Clone + Display + PartialEq>(
+fn handle_list<T: Clone + Display + PartialEq + Eq>(
     elements: &Vec<Element>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -129,7 +144,7 @@ fn handle_list<T: Clone + Display + PartialEq>(
     Ok(WanderValue::List(results))
 }
 
-fn deprecated_handle_lambda<T: Clone + PartialEq>(
+fn deprecated_handle_lambda<T: Clone + PartialEq + Eq>(
     params: &Vec<String>,
     body: &Vec<Element>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -139,7 +154,7 @@ fn deprecated_handle_lambda<T: Clone + PartialEq>(
     ))
 }
 
-fn handle_lambda<T: Clone + PartialEq>(
+fn handle_lambda<T: Clone + PartialEq + Eq>(
     name: &String,
     input: &WanderType,
     output: &WanderType,
@@ -153,7 +168,7 @@ fn handle_lambda<T: Clone + PartialEq>(
     ))
 }
 
-fn handle_conditional<T: Clone + Display + PartialEq>(
+fn handle_conditional<T: Clone + Display + PartialEq + Eq>(
     cond: &Element,
     ife: &Element,
     elsee: &Element,
@@ -168,7 +183,7 @@ fn handle_conditional<T: Clone + Display + PartialEq>(
     }
 }
 
-fn handle_scope<T: Clone + Display + PartialEq>(
+fn handle_scope<T: Clone + Display + PartialEq + Eq>(
     body: &Vec<Element>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -178,7 +193,7 @@ fn handle_scope<T: Clone + Display + PartialEq>(
     res
 }
 
-fn handle_let<T: Clone + Display + PartialEq>(
+fn handle_let<T: Clone + Display + PartialEq + Eq>(
     name: &String,
     element: &Element,
     bindings: &mut Bindings<T>,
@@ -192,7 +207,7 @@ fn handle_let<T: Clone + Display + PartialEq>(
     }
 }
 
-fn read_name<T: Clone + PartialEq + Display>(
+fn read_name<T: Clone + PartialEq + Display + Eq>(
     name: &String,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -206,7 +221,7 @@ fn read_name<T: Clone + PartialEq + Display>(
     }
 }
 
-fn read_field<T: Clone + PartialEq + Display>(
+fn read_field<T: Clone + PartialEq + Display + Eq>(
     name: &str,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -237,7 +252,7 @@ fn read_field<T: Clone + PartialEq + Display>(
     }
 }
 
-fn call_function<T: Clone + Display + PartialEq>(
+fn call_function<T: Clone + Display + PartialEq + Eq>(
     name: &String,
     arguments: &Vec<Element>,
     bindings: &mut Bindings<T>,

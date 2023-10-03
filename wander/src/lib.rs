@@ -7,7 +7,7 @@
 #![deny(missing_docs)]
 
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fmt::{Display, Write},
 };
 
@@ -60,7 +60,7 @@ pub struct HostFunctionBinding {
 
 /// A trait representing a function exported from the hosting application that
 /// can be called from Wander.
-pub trait HostFunction<T: Clone + PartialEq> {
+pub trait HostFunction<T: Clone + PartialEq + Eq> {
     /// The function called when the HostFunction is called from Wander.
     fn run(
         &self,
@@ -75,7 +75,7 @@ pub trait HostFunction<T: Clone + PartialEq> {
 pub type TokenTransformer = fn(&[Token]) -> Result<Vec<Token>, WanderError>;
 
 /// Types of values allowed in Wander.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum WanderType {
     /// Allow any type.
     Any,
@@ -101,7 +101,7 @@ pub enum WanderType {
 
 /// A value of a type provided by the host application that can be accessed via Wander.
 /// Note it cannot be accessed by Wander directly, only through HostFunctions.
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct HostValue<T> {
     /// The value passed to Wander.
     /// Note it cannot be accessed by Wander directly, only through HostFunctions.
@@ -110,8 +110,8 @@ pub struct HostValue<T> {
 
 /// Values in Wander programs used for Wander's implementation and interfacing between
 /// Wander and the host application.
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub enum WanderValue<T: Clone> {
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub enum WanderValue<T: Clone + PartialEq + Eq> {
     /// A Boolean value.
     Boolean(bool),
     /// An Integer value.
@@ -132,16 +132,24 @@ pub enum WanderValue<T: Clone> {
     List(Vec<WanderValue<T>>),
     /// A Tuple.
     Tuple(Vec<WanderValue<T>>),
+    /// A Set.
+    Set(HashSet<WanderValue<T>>),
     /// A Record.
     Record(HashMap<String, WanderValue<T>>),
     /// A HostValue.
     HostValue(HostValue<T>),
 }
 
+impl <T: Clone + PartialEq + Eq>core::hash::Hash for WanderValue<T> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(self).hash(state);
+    }
+}
+
 /// A struct represting a partially applied function.
 /// The function can be a Lambda or a HostFunction.
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub struct PartialApplication<T: Clone> {
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct PartialApplication<T: Clone + PartialEq + Eq> {
     arguments: Vec<WanderValue<T>>,
     callee: WanderValue<T>,
 }
@@ -180,7 +188,7 @@ pub fn write_string(string: &str) -> String {
     format!("\"{}\"", escaped_string)
 }
 
-fn write_list_or_tuple_wander_value<T: Clone + Display + PartialEq>(
+fn write_list_or_tuple_wander_value<T: Clone + Display + PartialEq + Eq>(
     open: char,
     close: char,
     contents: &Vec<WanderValue<T>>,
@@ -198,14 +206,14 @@ fn write_list_or_tuple_wander_value<T: Clone + Display + PartialEq>(
     write!(f, "{close}")
 }
 
-fn write_host_value<T: Display + PartialEq>(
+fn write_host_value<T: Display + PartialEq + Eq>(
     value: &HostValue<T>,
     f: &mut std::fmt::Formatter<'_>,
 ) -> std::fmt::Result {
     write!(f, "{}", value.value)
 }
 
-fn write_record<T: Clone + Display + PartialEq>(
+fn write_record<T: Clone + Display + PartialEq + Eq>(
     contents: &HashMap<String, WanderValue<T>>,
     f: &mut std::fmt::Formatter<'_>,
 ) -> std::fmt::Result {
@@ -221,7 +229,7 @@ fn write_record<T: Clone + Display + PartialEq>(
     write!(f, ")")
 }
 
-impl<T: Clone + Display + PartialEq> Display for WanderValue<T> {
+impl<T: Clone + Display + PartialEq + Eq> Display for WanderValue<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             WanderValue::Boolean(value) => write!(f, "{}", value),
@@ -236,12 +244,13 @@ impl<T: Clone + Display + PartialEq> Display for WanderValue<T> {
             WanderValue::Record(values) => write_record(values, f),
             WanderValue::PartialApplication(_) => write!(f, "[application]"),
             WanderValue::Lambda(_, _, _, _) => write!(f, "[lambda]"),
+            WanderValue::Set(_) => todo!(),
         }
     }
 }
 
 /// Run a Wander script with the given Bindings.
-pub fn run<T: Clone + Display + PartialEq>(
+pub fn run<T: Clone + Display + PartialEq + Eq>(
     script: &str,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
