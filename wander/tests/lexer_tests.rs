@@ -76,10 +76,10 @@ fn tokenize_name() {
 
 #[test]
 fn tokenize_names_keywords_and_symbols() {
-    let input = "let x = 5";
+    let input = "val x = 5";
     let res = tokenize(input);
     let expected = Ok(vec![
-        Token::Let,
+        Token::Val,
         Token::Name(String::from("x")),
         Token::EqualSign,
         Token::Int(5),

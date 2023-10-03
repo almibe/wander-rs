@@ -235,7 +235,7 @@ impl<T: Clone + Display + PartialEq> Display for WanderValue<T> {
             WanderValue::Tuple(contents) => write_list_or_tuple_wander_value('(', ')', contents, f),
             WanderValue::Record(values) => write_record(values, f),
             WanderValue::PartialApplication(_) => write!(f, "[application]"),
-            WanderValue::Lambda(_, _, _, _) => todo!(),
+            WanderValue::Lambda(_, _, _, _) => write!(f, "[lambda]"),
         }
     }
 }

@@ -60,14 +60,14 @@ fn parse_name() {
 
 #[test]
 fn parse_let_binding() {
-    let input = vec![
-        Token::Let,
+    let input: Vec<Token> = vec![
+        Token::Val,
         Token::Name(String::from("x")),
         Token::EqualSign,
         Token::Int(5),
     ];
     let res = parse(input);
-    let expected = Ok(vec![Element::Let(
+    let expected = Ok(vec![Element::Val(
         String::from("x"),
         Box::new(Element::Int(5)),
     )]);

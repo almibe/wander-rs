@@ -30,7 +30,7 @@ fn run_wander_string() {
 
 #[test]
 fn run_wander_let_binding() {
-    let input = "let x = true";
+    let input = "val x = true";
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Nothing);
     assert_eq!(res, expected);
@@ -38,7 +38,7 @@ fn run_wander_let_binding() {
 
 #[test]
 fn run_wander_let_binding_and_reference() {
-    let input = "let x = true x";
+    let input = "val x = true x";
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Boolean(true));
     assert_eq!(res, expected);
@@ -62,7 +62,7 @@ fn run_nested_function_calls() {
 
 #[test]
 fn run_scope() {
-    let input = "let x = {true 5 6} {x}";
+    let input = "val x = {true 5 6} {x}";
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Int(6));
     assert_eq!(res, expected);
@@ -102,7 +102,7 @@ fn run_tuple() {
 
 #[test]
 fn run_lambda() {
-    let input = "let id = { x -> x } id(5)";
+    let input = "val id = { x -> x } id(5)";
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Int(5));
     assert_eq!(res, expected);
@@ -110,7 +110,7 @@ fn run_lambda() {
 
 #[test]
 fn run_lambda_with_function() {
-    let input = "let id = { x -> x } id([Bool.not(true) Bool.not(false)])";
+    let input = "val id = { x -> x } id([Bool.not(true) Bool.not(false)])";
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::List(vec![
         WanderValue::Boolean(false),

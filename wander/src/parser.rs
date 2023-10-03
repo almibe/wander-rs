@@ -16,7 +16,7 @@ pub enum Element {
     Int(i64),
     String(String),
     Name(String),
-    Let(String, Box<Element>),
+    Val(String, Box<Element>),
     FunctionCall(String, Vec<Element>),
     Scope(Vec<Element>),
     Conditional(Box<Element>, Box<Element>, Box<Element>),
@@ -250,13 +250,13 @@ fn tuple(gaze: &mut Gaze<Token>) -> Option<Element> {
     }
 }
 
-fn let_binding(gaze: &mut Gaze<Token>) -> Option<Element> {
+fn val_binding(gaze: &mut Gaze<Token>) -> Option<Element> {
     let name = match (gaze.next(), gaze.next(), gaze.next()) {
-        (Some(Token::Let), Some(Token::Name(name)), Some(Token::EqualSign)) => name,
+        (Some(Token::Val), Some(Token::Name(name)), Some(Token::EqualSign)) => name,
         _ => return None,
     };
     gaze.attemptf(&mut element)
-        .map(|element| Element::Let(name, Box::new(element)))
+        .map(|element| Element::Val(name, Box::new(element)))
 }
 
 fn element(gaze: &mut Gaze<Token>) -> Option<Element> {
@@ -270,7 +270,7 @@ fn element(gaze: &mut Gaze<Token>) -> Option<Element> {
         forward,
         int,
         string,
-        let_binding,
+        val_binding,
         scope,
         conditional,
         lambda,

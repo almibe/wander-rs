@@ -6,7 +6,7 @@ use wander::{parser::Element, preludes::common, run, NoHostType, WanderType, Wan
 
 #[test]
 fn basic_currying() {
-    let input = "let isTrue = Bool.and(true) [isTrue(true) isTrue(false)]";
+    let input = "val isTrue = Bool.and(true) [isTrue(true) isTrue(false)]";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let res = format!("{res}");
     let res = run(&res, &mut common::<NoHostType>()).unwrap();
@@ -20,7 +20,7 @@ fn basic_currying() {
 #[test]
 fn currying_with_lambda() {
     let input =
-        "let and = { x y -> Bool.and(x y) } let isTrue = and(true) [isTrue(true) isTrue(false)]";
+        "val and = { x y -> Bool.and(x y) } val isTrue = and(true) [isTrue(true) isTrue(false)]";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let res = format!("{res}");
     let res = run(&res, &mut common::<NoHostType>()).unwrap();
@@ -33,7 +33,7 @@ fn currying_with_lambda() {
 
 #[test]
 fn partial_application_twice_with_lambda() {
-    let input = "let and3 = { x y z -> Bool.and(z Bool.and(x y)) } let and = and3(true) let isTrue = and(true) and(isTrue(true) isTrue(false))";
+    let input = "val and3 = { x y z -> Bool.and(z Bool.and(x y)) } val and = and3(true) val isTrue = and(true) and(isTrue(true) isTrue(false))";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let res = format!("{res}");
     let res = run(&res, &mut common::<NoHostType>()).unwrap();

@@ -29,7 +29,7 @@ pub fn eval_element<T: Clone + Display + PartialEq>(
         Element::Boolean(value) => Ok(WanderValue::Boolean(*value)),
         Element::Int(value) => Ok(WanderValue::Int(*value)),
         Element::String(value) => Ok(WanderValue::String(unescape_string(value.to_string()))),
-        Element::Let(name, value) => handle_let(name, value, bindings),
+        Element::Val(name, value) => handle_let(name, value, bindings),
         Element::Name(name) => read_name(name, bindings),
         Element::FunctionCall(name, arguments) => call_function(name, arguments, bindings),
         Element::Scope(body) => handle_scope(body, bindings),
