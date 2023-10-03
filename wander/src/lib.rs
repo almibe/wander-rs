@@ -206,6 +206,22 @@ fn write_list_or_tuple_wander_value<T: Clone + Display + PartialEq + Eq>(
     write!(f, "{close}")
 }
 
+fn write_set<T: Clone + Display + PartialEq + Eq>(
+    contents: &HashSet<WanderValue<T>>,
+    f: &mut std::fmt::Formatter<'_>,
+) -> std::fmt::Result {
+    f.write_str("#(").unwrap();
+    let mut i = 0;
+    for value in contents {
+        write!(f, "{value}").unwrap();
+        i += 1;
+        if i < contents.len() {
+            write!(f, " ").unwrap();
+        }
+    }
+    f.write_char(')')
+}
+
 fn write_host_value<T: Display + PartialEq + Eq>(
     value: &HostValue<T>,
     f: &mut std::fmt::Formatter<'_>,
@@ -244,7 +260,7 @@ impl<T: Clone + Display + PartialEq + Eq> Display for WanderValue<T> {
             WanderValue::Record(values) => write_record(values, f),
             WanderValue::PartialApplication(_) => write!(f, "[application]"),
             WanderValue::Lambda(_, _, _, _) => write!(f, "[lambda]"),
-            WanderValue::Set(_) => todo!(),
+            WanderValue::Set(contents) => write_set(contents, f),
         }
     }
 }

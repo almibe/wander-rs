@@ -19,3 +19,19 @@ fn basic_let_multiple_vals() {
     let expected = WanderValue::Boolean(false);
     assert_eq!(res, expected);
 }
+
+#[test]
+fn nested_lets() {
+    let input = r#"
+    let 
+        val x = true 
+        val y = let 
+            val y = Bool.and(x false) 
+            in Bool.and(x y) 
+        end 
+        in y 
+    end"#;
+    let res = run(input, &mut common::<NoHostType>()).unwrap();
+    let expected = WanderValue::Boolean(false);
+    assert_eq!(res, expected);
+}

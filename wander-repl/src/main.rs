@@ -15,7 +15,7 @@ use wander::bindings::Bindings;
 use wander::preludes::common;
 use wander::{run, HostFunctionBinding, NoHostType};
 
-struct REPLState<T: Clone + PartialEq> {
+struct REPLState<T: Clone + PartialEq + Eq> {
     bindings: Bindings<T>,
 }
 
@@ -64,7 +64,7 @@ fn main() -> Result<()> {
     rl.save_history("history.txt")
 }
 
-fn handle_command<T: Clone + PartialEq>(input: &str, instance: &mut REPLState<T>) -> bool {
+fn handle_command<T: Clone + PartialEq + Eq>(input: &str, instance: &mut REPLState<T>) -> bool {
     let mut parts = input.split_whitespace();
     match parts.next().unwrap() {
         //":remote" => todo!(),
@@ -75,7 +75,10 @@ fn handle_command<T: Clone + PartialEq>(input: &str, instance: &mut REPLState<T>
         ":environment" | ":e" => environment(&mut instance.bindings),
         ":help" | ":h" => help(),
         ":broadcast" => broadcast(input),
-        _ => todo!(),
+        s => {
+            println!("Unknown command - {s}");
+            true
+        },
     }
 }
 
@@ -83,7 +86,7 @@ fn broadcast(_input: &str) -> bool {
     true
 }
 
-fn bindings<T: Clone + PartialEq>(bindings: &Bindings<T>) -> bool {
+fn bindings<T: Clone + PartialEq + Eq>(bindings: &Bindings<T>) -> bool {
     bindings
         .bound_names()
         .iter()
@@ -91,7 +94,7 @@ fn bindings<T: Clone + PartialEq>(bindings: &Bindings<T>) -> bool {
     true
 }
 
-fn environment<T: Clone + PartialEq>(bindings: &mut Bindings<T>) -> bool {
+fn environment<T: Clone + PartialEq + Eq>(bindings: &mut Bindings<T>) -> bool {
     let mut display: Vec<EnvironmentDisplay> = bindings
         .environment()
         .into_iter()

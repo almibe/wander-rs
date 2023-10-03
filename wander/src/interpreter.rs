@@ -29,7 +29,7 @@ pub fn eval_element<T: Clone + Display + PartialEq + Eq>(
         Element::Boolean(value) => Ok(WanderValue::Boolean(*value)),
         Element::Int(value) => Ok(WanderValue::Int(*value)),
         Element::String(value) => Ok(WanderValue::String(unescape_string(value.to_string()))),
-        Element::Val(name, value) => handle_let(name, value, bindings),
+        Element::Val(name, value) => handle_val(name, value, bindings),
         Element::Name(name) => read_name(name, bindings),
         Element::FunctionCall(name, arguments) => call_function(name, arguments, bindings),
         Element::Scope(body) => handle_scope(body, bindings),
@@ -193,7 +193,7 @@ fn handle_scope<T: Clone + Display + PartialEq + Eq>(
     res
 }
 
-fn handle_let<T: Clone + Display + PartialEq + Eq>(
+fn handle_val<T: Clone + Display + PartialEq + Eq>(
     name: &String,
     element: &Element,
     bindings: &mut Bindings<T>,
@@ -275,6 +275,34 @@ fn call_function<T: Clone + Display + PartialEq + Eq>(
                 )),
             }
         }
+        // Some(WanderValue::Lambda(parameter, input, output, body)) => {
+        //     match parameters.len().cmp(&arguments.len()) {
+        //         Ordering::Equal => {
+        //             bindings.add_scope();
+        //             for (i, parameter) in parameters.iter().enumerate() {
+        //                 bindings.bind(
+        //                     parameter.to_owned(),
+        //                     argument_values.get(i).unwrap().clone(),
+        //                 );
+        //             }
+        //             let res = eval(&body, bindings);
+        //             bindings.remove_scope();
+        //             res
+        //         }
+        //         Ordering::Less => Err(WanderError(format!(
+        //             "Incorrect number of arguments, {}, passed to {}, expecting {}.",
+        //             arguments.len(),
+        //             name,
+        //             parameters.len()
+        //         ))),
+        //         Ordering::Greater => Ok(WanderValue::PartialApplication(Box::new(
+        //             PartialApplication {
+        //                 arguments: argument_values,
+        //                 callee: WanderValue::DeprecatedLambda(parameters, body),
+        //             },
+        //         ))),
+        //     }
+        // }
         Some(WanderValue::DeprecatedLambda(parameters, body)) => {
             match parameters.len().cmp(&arguments.len()) {
                 Ordering::Equal => {

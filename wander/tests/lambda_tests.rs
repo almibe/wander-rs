@@ -56,16 +56,14 @@ fn parse_lambda() {
 
 #[test]
 fn parse_multi_line_lambda() {
-    let input = "\\x -> { x x x x }";
+    let input = "\\x -> let val x = true in x end";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let expected = WanderValue::Lambda(
         "x".to_owned(),
         WanderType::Any,
         WanderType::Any,
         Box::new(Element::Scope(vec![
-            Element::Name("x".to_owned()),
-            Element::Name("x".to_owned()),
-            Element::Name("x".to_owned()),
+            Element::Val("x".to_owned(), Box::new(Element::Boolean(true))),
             Element::Name("x".to_owned()),
         ])),
     );

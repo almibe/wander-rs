@@ -59,6 +59,14 @@ fn parse_name() {
 }
 
 #[test]
+fn parse_empty_scope() {
+    let input = vec![Token::Let, Token::In, Token::End];
+    let res = parse(input);
+    let expected = Ok(vec![Element::Scope(vec![])]);
+    assert_eq!(res, expected);
+}
+
+#[test]
 fn parse_let_binding() {
     let input: Vec<Token> = vec![
         Token::Val,
@@ -87,32 +95,6 @@ fn parse_function_call() {
         String::from("test"),
         vec![Element::Boolean(false)],
     )]);
-    assert_eq!(res, expected);
-}
-
-#[test]
-fn parse_empty_scope() {
-    let input = vec![Token::OpenBrace, Token::CloseBrace];
-    let res = parse(input);
-    let expected = Ok(vec![Element::Scope(vec![])]);
-    assert_eq!(res, expected);
-}
-
-#[test]
-fn parse_nested_scopes() {
-    let input = vec![
-        Token::OpenBrace,
-        Token::Int(5),
-        Token::OpenBrace,
-        Token::Boolean(false),
-        Token::CloseBrace,
-        Token::CloseBrace,
-    ];
-    let res = parse(input);
-    let expected = Ok(vec![Element::Scope(vec![
-        Element::Int(5),
-        Element::Scope(vec![Element::Boolean(false)]),
-    ])]);
     assert_eq!(res, expected);
 }
 
