@@ -90,7 +90,7 @@ fn run_list() {
 
 #[test]
 fn run_tuple() {
-    let input = "() (1 (2) ())";
+    let input = "'() '(1 '(2) '())";
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Tuple(vec![
         WanderValue::Int(1),

@@ -151,6 +151,7 @@ fn parse_list() {
 #[test]
 fn parse_tuple() {
     let input = vec![
+        Token::SingleQuote,
         Token::OpenParen,
         Token::Name("test".to_owned()),
         Token::Int(24601),

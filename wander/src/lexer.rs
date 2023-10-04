@@ -39,6 +39,9 @@ pub enum Token {
     #[token("::")]
     DoubleColon,
 
+    #[token("'")]
+    SingleQuote,
+
     #[regex("-?[0-9]+", int)]
     Int(i64),
 

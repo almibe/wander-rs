@@ -263,6 +263,11 @@ fn set(gaze: &mut Gaze<Token>) -> Option<Element> {
 
 fn tuple(gaze: &mut Gaze<Token>) -> Option<Element> {
     match gaze.next() {
+        Some(Token::SingleQuote) => (),
+        _ => return None,
+    }
+
+    match gaze.next() {
         Some(Token::OpenParen) => (),
         _ => return None,
     }
