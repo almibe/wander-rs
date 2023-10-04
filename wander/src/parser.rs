@@ -162,18 +162,41 @@ fn lambda(gaze: &mut Gaze<Token>) -> Option<Element> {
         _ => return None,
     }
 
-    let name = match gaze.attemptf(&mut element) {
-        Some(Element::Name(name)) => name,
-        _ => return None,
-    };
+    let mut params: Vec<String> = vec![];
+    while let Some(Element::Name(name)) = gaze.attemptf(&mut element) {
+        params.push(name);
+    }
 
     match gaze.next() {
         Some(Token::Arrow) => (),
         _ => return None,
     }
 
-    gaze.attemptf(&mut element)
-        .map(|element| Element::Lambda(name, WanderType::Any, WanderType::Any, Box::new(element)))
+    gaze.attemptf(&mut element).map(|body| {
+        let mut final_lambda = None;
+        params.reverse();
+        for name in params {
+            match final_lambda {
+                Some(prev_lambda) => {
+                    final_lambda = Some(Element::Lambda(
+                        name.clone(),
+                        WanderType::Any,
+                        WanderType::Any,
+                        Box::new(prev_lambda),
+                    ))
+                }
+                None => {
+                    final_lambda = Some(Element::Lambda(
+                        name.clone(),
+                        WanderType::Any,
+                        WanderType::Any,
+                        Box::new(body.clone()),
+                    ))
+                }
+            }
+        }
+        final_lambda.unwrap()
+    })
 }
 
 fn deprecated_lambda(gaze: &mut Gaze<Token>) -> Option<Element> {

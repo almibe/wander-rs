@@ -78,7 +78,7 @@ fn handle_command<T: Clone + PartialEq + Eq>(input: &str, instance: &mut REPLSta
         s => {
             println!("Unknown command - {s}");
             true
-        },
+        }
     }
 }
 

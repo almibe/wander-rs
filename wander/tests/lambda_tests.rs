@@ -69,3 +69,11 @@ fn parse_multi_line_lambda() {
     );
     assert_eq!(res, expected);
 }
+
+#[test]
+fn multi_param_lambda() {
+    let input = "Core.eq(\\x y -> x \\x -> \\y -> x)";
+    let res = run(input, &mut common::<NoHostType>()).unwrap();
+    let expected = WanderValue::Boolean(true);
+    assert_eq!(res, expected);
+}

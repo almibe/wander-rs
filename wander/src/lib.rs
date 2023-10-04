@@ -140,7 +140,7 @@ pub enum WanderValue<T: Clone + PartialEq + Eq> {
     HostValue(HostValue<T>),
 }
 
-impl <T: Clone + PartialEq + Eq>core::hash::Hash for WanderValue<T> {
+impl<T: Clone + PartialEq + Eq> core::hash::Hash for WanderValue<T> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         core::mem::discriminant(self).hash(state);
     }
