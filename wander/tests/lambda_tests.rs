@@ -77,3 +77,19 @@ fn multi_param_lambda() {
     let expected = WanderValue::Boolean(true);
     assert_eq!(res, expected);
 }
+
+#[test]
+fn define_and_call_lambda() {
+    let input = "\\x -> true 45";
+    let res = run(input, &mut common::<NoHostType>()).unwrap();
+    let expected = WanderValue::Boolean(true);
+    assert_eq!(res, expected);
+}
+
+#[test]
+fn define_and_partially_call_lambda() {
+    let input = "\\x y -> 31 5";
+    let res = run(input, &mut common::<NoHostType>()).unwrap();
+    let expected = WanderValue::Lambda("y".to_owned(), WanderType::Any, WanderType::Any, Box::new(Element::Int(31)));
+    assert_eq!(res, expected);
+}

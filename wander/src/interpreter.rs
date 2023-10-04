@@ -14,11 +14,18 @@ pub fn eval<T: Clone + Display + PartialEq + Eq>(
     script: &Vec<Element>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
-    let mut result = Ok(WanderValue::Nothing);
+    let mut result = WanderValue::Nothing;
     for element in script {
-        result = Ok(eval_element(element, bindings)?);
+        match result {
+            WanderValue::Lambda(ref name, _input, _output, ref body) => {
+                let argument = eval_element(element, bindings)?;
+                bindings.bind(name.clone(), argument);
+                result = eval_element(body, bindings)?;
+            },
+            _ => result = eval_element(element, bindings)?,
+        }
     }
-    result
+    Ok(result)
 }
 
 pub fn eval_element<T: Clone + Display + PartialEq + Eq>(
