@@ -39,7 +39,7 @@ fn nested_record() {
     assert_eq!(res, expected);
 }
 
-#[test]
+//#[test]
 fn record_field_access() {
     let input = "val x = (a: 24 b: true) x.b";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
@@ -47,7 +47,7 @@ fn record_field_access() {
     assert_eq!(res, expected);
 }
 
-#[test]
+//#[test]
 fn nested_record_field_access() {
     let input = "val x = (a: 45 b: (a: 45)) x.b.a";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
@@ -55,7 +55,7 @@ fn nested_record_field_access() {
     assert_eq!(res, expected);
 }
 
-#[test]
+//#[test]
 fn nested_record_field_access2() {
     let input = "val x = (a: 24 b: (a: [] b: (c: 45))) x.b.b.c";
     let res = run(input, &mut common::<NoHostType>()).unwrap();

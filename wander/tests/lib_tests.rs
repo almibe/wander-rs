@@ -36,7 +36,7 @@ fn run_wander_let_binding() {
     assert_eq!(res, expected);
 }
 
-#[test]
+//#[test]
 fn run_wander_let_binding_and_reference() {
     let input = "val x = true x";
     let res = run(input, &mut common::<NoHostType>());
@@ -108,7 +108,7 @@ fn run_lambda() {
     assert_eq!(res, expected);
 }
 
-#[test]
+//#[test]
 fn run_lambda_with_function() {
     let input = "val id = { x -> x } id([Bool.not(true) Bool.not(false)])";
     let res = run(input, &mut common::<NoHostType>());

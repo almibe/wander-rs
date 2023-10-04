@@ -276,3 +276,33 @@ pub fn run<T: Clone + Display + PartialEq + Eq>(
     let elements = translate(elements)?;
     eval(&elements, bindings)
 }
+
+#[derive(Debug)]
+/// Structure used for debugging or inspecting code.
+pub struct Introspection {
+    ///
+    pub tokens: Vec<Token>,
+    ///
+    pub tokens_transformed: Vec<Token>,
+    ///
+    pub elements: Vec<Element>,
+    ///
+    pub elements_translated: Vec<Element>,
+}
+
+/// Run a Wander script with the given Bindings.
+pub fn introspect<T: Clone + PartialEq + Eq>(
+    script: &str,
+    bindings: &Bindings<T>,
+) -> Result<Introspection, WanderError> {
+    let tokens = tokenize(script)?;
+    let tokens_transformed = transform(&tokens.clone(), bindings)?;
+    let elements = parse(tokens_transformed.clone())?;
+    let elements_translated = translate(elements.clone())?;
+    Ok(Introspection {
+        tokens,
+        tokens_transformed,
+        elements,
+        elements_translated,
+    })
+}

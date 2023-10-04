@@ -21,7 +21,8 @@ pub fn eval<T: Clone + Display + PartialEq + Eq>(
                 let argument = eval_element(element, bindings)?;
                 bindings.bind(name.clone(), argument);
                 result = eval_element(body, bindings)?;
-            },
+            }
+
             _ => result = eval_element(element, bindings)?,
         }
     }
@@ -41,7 +42,6 @@ pub fn eval_element<T: Clone + Display + PartialEq + Eq>(
         Element::FunctionCall(name, arguments) => call_function(name, arguments, bindings),
         Element::Scope(body) => handle_scope(body, bindings),
         Element::Conditional(c, i, e) => handle_conditional(c, i, e, bindings),
-        Element::DeprecatedLambda(params, body) => deprecated_handle_lambda(params, body),
         Element::List(values) => handle_list(values, bindings),
         Element::Nothing => Ok(WanderValue::Nothing),
         Element::Forward => panic!("Should never reach."),
@@ -151,27 +151,17 @@ fn handle_list<T: Clone + Display + PartialEq + Eq>(
     Ok(WanderValue::List(results))
 }
 
-fn deprecated_handle_lambda<T: Clone + PartialEq + Eq>(
-    params: &Vec<String>,
-    body: &Vec<Element>,
-) -> Result<WanderValue<T>, WanderError> {
-    Ok(WanderValue::DeprecatedLambda(
-        params.to_owned(),
-        body.to_owned(),
-    ))
-}
-
 fn handle_lambda<T: Clone + PartialEq + Eq>(
-    name: &String,
+    name: &str,
     input: &WanderType,
     output: &WanderType,
-    body: &Box<Element>,
+    body: &Element,
 ) -> Result<WanderValue<T>, WanderError> {
     Ok(WanderValue::Lambda(
-        name.clone(),
+        name.to_owned(),
         input.clone(),
         output.clone(),
-        body.clone(),
+        Box::new(body.clone()),
     ))
 }
 
@@ -202,16 +192,18 @@ fn handle_scope<T: Clone + Display + PartialEq + Eq>(
 
 fn handle_val<T: Clone + Display + PartialEq + Eq>(
     name: &String,
-    element: &Element,
+    elements: &Vec<Element>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
-    match eval_element(element, bindings) {
-        Ok(value) => {
-            bindings.bind(name.to_string(), value);
-            Ok(WanderValue::Nothing)
+    let mut result = WanderValue::Nothing;
+    for element in elements {
+        match eval_element(element, bindings) {
+            Ok(value) => result = value,
+            Err(err) => return Err(err),
         }
-        Err(err) => Err(err),
     }
+    bindings.bind(name.to_string(), result);
+    Ok(WanderValue::Nothing)
 }
 
 fn read_name<T: Clone + PartialEq + Display + Eq>(

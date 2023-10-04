@@ -13,7 +13,7 @@ use tabled::{
 };
 use wander::bindings::Bindings;
 use wander::preludes::common;
-use wander::{run, HostFunctionBinding, NoHostType};
+use wander::{run, HostFunctionBinding, NoHostType, introspect};
 
 struct REPLState<T: Clone + PartialEq + Eq> {
     bindings: Bindings<T>,
@@ -69,6 +69,7 @@ fn handle_command<T: Clone + PartialEq + Eq>(input: &str, instance: &mut REPLSta
     match parts.next().unwrap() {
         //":remote" => todo!(),
         //":local" => todo!(),
+        ":parse" | ":p" => parse(input, &instance.bindings),
         ":status" | ":s" => status(),
         ":quit" | ":q" => quit(),
         ":bindings" | ":b" => bindings(&instance.bindings),
@@ -80,6 +81,20 @@ fn handle_command<T: Clone + PartialEq + Eq>(input: &str, instance: &mut REPLSta
             true
         }
     }
+}
+
+fn parse<T: Clone + Eq>(input: &str, instance: &Bindings<T>) -> bool {
+    let input = if input.starts_with(":parse") {
+        input.replacen(":parse", "", 1)
+    } else {
+        input.replacen(":p", "", 1)
+    };
+    let introspection = introspect(&input,  instance).unwrap();
+    println!("Tokens:\n{:?}\n", introspection.tokens);
+    println!("Transformed:\n{:?}\n", introspection.tokens_transformed);
+    println!("Elements:\n{:?}\n", introspection.elements);
+    println!("Translated:\n{:?}\n", introspection.elements_translated);
+    true
 }
 
 fn broadcast(_input: &str) -> bool {

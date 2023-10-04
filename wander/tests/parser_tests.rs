@@ -7,6 +7,7 @@ mod records_tests;
 use wander::lexer::Token;
 use wander::parser::{parse, Element};
 use wander::translation::translate;
+use wander::WanderType;
 
 #[test]
 fn parse_booleans() {
@@ -75,10 +76,7 @@ fn parse_let_binding() {
         Token::Int(5),
     ];
     let res = parse(input);
-    let expected = Ok(vec![Element::Val(
-        String::from("x"),
-        Box::new(Element::Int(5)),
-    )]);
+    let expected = Ok(vec![Element::Val(String::from("x"), vec![Element::Int(5)])]);
     assert_eq!(res, expected)
 }
 
@@ -119,16 +117,17 @@ fn parse_conditional() {
 #[test]
 fn parse_lambda() {
     let input = vec![
-        Token::OpenBrace,
+        Token::Lambda,
         Token::Name("test".to_owned()),
         Token::Arrow,
         Token::Name("test".to_owned()),
-        Token::CloseBrace,
     ];
     let res = parse(input);
-    let expected = Ok(vec![Element::DeprecatedLambda(
-        vec!["test".to_owned()],
-        vec![Element::Name("test".to_owned())],
+    let expected = Ok(vec![Element::Lambda(
+        "test".to_owned(),
+        WanderType::Any,
+        WanderType::Any,
+        Box::new(Element::Name("test".to_owned())),
     )]);
     assert_eq!(res, expected);
 }

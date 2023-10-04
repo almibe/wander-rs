@@ -16,11 +16,10 @@ pub enum Element {
     Int(i64),
     String(String),
     Name(String),
-    Val(String, Box<Element>),
+    Val(String, Vec<Element>),
     FunctionCall(String, Vec<Element>),
     Scope(Vec<Element>),
     Conditional(Box<Element>, Box<Element>, Box<Element>),
-    DeprecatedLambda(Vec<String>, Vec<Element>),
     Lambda(String, WanderType, WanderType, Box<Element>),
     Tuple(Vec<Element>),
     List(Vec<Element>),
@@ -199,37 +198,6 @@ fn lambda(gaze: &mut Gaze<Token>) -> Option<Element> {
     })
 }
 
-fn deprecated_lambda(gaze: &mut Gaze<Token>) -> Option<Element> {
-    match gaze.next() {
-        Some(Token::OpenBrace) => (),
-        _ => return None,
-    }
-
-    let mut names = vec![];
-    loop {
-        match gaze.attemptf(&mut element) {
-            Some(Element::Name(name)) => names.push(name),
-            Some(_) => return None, //only allow names
-            None => break,          //should be the arrow token failing to match
-        }
-    }
-
-    match gaze.next() {
-        Some(Token::Arrow) => (),
-        _ => return None,
-    }
-
-    let mut body = vec![];
-    while let Some(element) = gaze.attemptf(&mut element) {
-        body.push(element)
-    }
-
-    match gaze.next() {
-        Some(Token::CloseBrace) => Some(Element::DeprecatedLambda(names, body)),
-        _ => None,
-    }
-}
-
 fn list(gaze: &mut Gaze<Token>) -> Option<Element> {
     match gaze.next() {
         Some(Token::OpenSquare) => (),
@@ -315,8 +283,39 @@ fn val_binding(gaze: &mut Gaze<Token>) -> Option<Element> {
         (Some(Token::Val), Some(Token::Name(name)), Some(Token::EqualSign)) => name,
         _ => return None,
     };
-    gaze.attemptf(&mut element)
-        .map(|element| Element::Val(name, Box::new(element)))
+    // gaze.attemptf(&mut element)
+    //     .map(|element| Element::Val(name, Box::new(element)))
+
+    let mut body = vec![];
+    while let Some(element) = gaze.attemptf(&mut decl) {
+        body.push(element);
+    }
+    Some(Element::Val(name, body))
+}
+
+fn decl(gaze: &mut Gaze<Token>) -> Option<Element> {
+    let mut parsers = vec![
+        tuple,
+        set,
+        record,
+        function_call,
+        name,
+        boolean,
+        nothing,
+        forward,
+        int,
+        string,
+        let_scope,
+        conditional,
+        lambda,
+        list,
+    ];
+    for &mut mut parser in parsers.iter_mut() {
+        if let Some(element) = gaze.attemptf(&mut parser) {
+            return Some(element);
+        }
+    }
+    None
 }
 
 fn element(gaze: &mut Gaze<Token>) -> Option<Element> {
@@ -335,7 +334,6 @@ fn element(gaze: &mut Gaze<Token>) -> Option<Element> {
         let_scope,
         conditional,
         lambda,
-        deprecated_lambda,
         list,
     ];
     for &mut mut parser in parsers.iter_mut() {
