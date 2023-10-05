@@ -1,7 +1,7 @@
 [package]
 name = "wander-wasm"
 description = "Wasm support for Wander."
-version = "0.2.0"
+version = "0.4.0"
 private = true
 license = "MPL-2.0"
 authors = ["Alex Michael Berry <alexmiberry@gmail.com>"]
@@ -15,7 +15,7 @@ default = ["console_error_panic_hook"]
 
 [dependencies]
 wasm-bindgen = "0.2.84"
-wander = "0.2.0" #{ path = "../wander" }
+wander = { path = "../wander" }
 serde-wasm-bindgen = "0.4"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
