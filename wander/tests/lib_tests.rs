@@ -36,9 +36,9 @@ fn run_wander_let_binding() {
     assert_eq!(res, expected);
 }
 
-//#[test]
+#[test]
 fn run_wander_let_binding_and_reference() {
-    let input = "val x = true x";
+    let input = "let val x = true in x end";
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Boolean(true));
     assert_eq!(res, expected);
@@ -100,9 +100,9 @@ fn run_tuple() {
     assert_eq!(res, expected);
 }
 
-//#[test]
+#[test]
 fn run_lambda() {
-    let input = "let val id = \\x -> x in id(5) end";
+    let input = "let val id = \\x -> x in id 5 end";
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Int(5));
     assert_eq!(res, expected);
@@ -110,7 +110,12 @@ fn run_lambda() {
 
 //#[test]
 fn run_lambda_with_function() {
-    let input = "val id = { x -> x } id([Bool.not(true) Bool.not(false)])";
+    let input = r#"
+    let
+        val id = \x -> x
+    in
+        id [(Bool.not true) (Bool.not false)]
+    end"#;
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::List(vec![
         WanderValue::Boolean(false),

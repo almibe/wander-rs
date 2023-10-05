@@ -45,8 +45,16 @@ fn currying_with_lambda() {
 }
 
 //#[test]
-fn partial_application_twice_with_lambda() {
-    let input = r#"val and3 = { x y z -> Bool.and(z Bool.and(x y)) } val and = and3(true) val isTrue = and(true) and(isTrue(true) isTrue(false))"#;
+fn currying_twice_with_lambda() {
+    let input = r#"
+        let
+            val and3 = \x y z -> Bool.and x (Bool.and y z)
+            val and = and3 true 
+            val isTrue = and true
+        in
+            and(isTrue(true) isTrue(false))
+        end
+    "#;
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let res = format!("{res}");
     let res = run(&res, &mut common::<NoHostType>()).unwrap();

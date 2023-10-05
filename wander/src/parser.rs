@@ -116,7 +116,10 @@ fn let_scope(gaze: &mut Gaze<Token>) -> Option<Element> {
         _ => return None,
     }
 
-    if let Some(element) = gaze.attemptf(&mut element) {
+    // if let Some(element) = gaze.attemptf(&mut element) {
+    //     body.push(element);
+    // }
+    while let Some(element) = gaze.attemptf(&mut decl) {
         body.push(element);
     }
 
@@ -305,8 +308,6 @@ fn val_binding(gaze: &mut Gaze<Token>) -> Option<Element> {
         (Some(Token::Val), Some(Token::Name(name)), Some(Token::EqualSign)) => name,
         _ => return None,
     };
-    // gaze.attemptf(&mut element)
-    //     .map(|element| Element::Val(name, Box::new(element)))
 
     let mut body = vec![];
     while let Some(element) = gaze.attemptf(&mut decl) {
