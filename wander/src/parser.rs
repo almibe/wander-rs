@@ -126,6 +126,23 @@ fn let_scope(gaze: &mut Gaze<Token>) -> Option<Element> {
     }
 }
 
+fn grouping(gaze: &mut Gaze<Token>) -> Option<Element> {
+    match gaze.next() {
+        Some(Token::OpenParen) => (),
+        _ => return None,
+    }
+
+    let mut body = vec![];
+    while let Some(element) = gaze.attemptf(&mut element) {
+        body.push(element);
+    }
+
+    match gaze.next() {
+        Some(Token::CloseParen) => Some(Element::Scope(body)),
+        _ => return None,
+    }
+}
+
 fn conditional(gaze: &mut Gaze<Token>) -> Option<Element> {
     match gaze.next() {
         Some(Token::If) => (),
@@ -217,7 +234,7 @@ fn list(gaze: &mut Gaze<Token>) -> Option<Element> {
 
 fn record(gaze: &mut Gaze<Token>) -> Option<Element> {
     match gaze.next() {
-        Some(Token::OpenParen) => (),
+        Some(Token::OpenBrace) => (),
         _ => return None,
     }
 
@@ -234,7 +251,7 @@ fn record(gaze: &mut Gaze<Token>) -> Option<Element> {
     }
 
     match gaze.next() {
-        Some(Token::CloseParen) => Some(Element::Record(contents)),
+        Some(Token::CloseBrace) => Some(Element::Record(contents)),
         _ => None,
     }
 }
@@ -337,6 +354,7 @@ fn element(gaze: &mut Gaze<Token>) -> Option<Element> {
         string,
         val_binding,
         let_scope,
+        grouping,
         conditional,
         lambda,
         list,

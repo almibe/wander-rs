@@ -189,12 +189,12 @@ pub fn write_string(string: &str) -> String {
 }
 
 fn write_list_or_tuple_wander_value<T: Clone + Display + PartialEq + Eq>(
-    open: char,
+    open: &str,
     close: char,
     contents: &Vec<WanderValue<T>>,
     f: &mut std::fmt::Formatter<'_>,
 ) -> std::fmt::Result {
-    f.write_char(open).unwrap();
+    f.write_str(open).unwrap();
     let mut i = 0;
     for value in contents {
         write!(f, "{value}").unwrap();
@@ -233,7 +233,7 @@ fn write_record<T: Clone + Display + PartialEq + Eq>(
     contents: &HashMap<String, WanderValue<T>>,
     f: &mut std::fmt::Formatter<'_>,
 ) -> std::fmt::Result {
-    write!(f, "(").unwrap();
+    write!(f, "{{").unwrap();
     let mut i = 0;
     for (name, value) in contents {
         write!(f, "{name}: {value}").unwrap();
@@ -242,7 +242,7 @@ fn write_record<T: Clone + Display + PartialEq + Eq>(
             write!(f, " ").unwrap();
         }
     }
-    write!(f, ")")
+    write!(f, "}}")
 }
 
 impl<T: Clone + Display + PartialEq + Eq> Display for WanderValue<T> {
@@ -253,10 +253,12 @@ impl<T: Clone + Display + PartialEq + Eq> Display for WanderValue<T> {
             WanderValue::String(value) => f.write_str(&write_string(value)),
             WanderValue::Nothing => write!(f, "nothing"),
             WanderValue::HostedFunction(_) => write!(f, "[function]"),
-            WanderValue::List(contents) => write_list_or_tuple_wander_value('[', ']', contents, f),
+            WanderValue::List(contents) => write_list_or_tuple_wander_value("[", ']', contents, f),
             WanderValue::DeprecatedLambda(_, _) => write!(f, "[lambda]"),
             WanderValue::HostValue(value) => write_host_value(value, f),
-            WanderValue::Tuple(contents) => write_list_or_tuple_wander_value('(', ')', contents, f),
+            WanderValue::Tuple(contents) => {
+                write_list_or_tuple_wander_value("'(", ')', contents, f)
+            }
             WanderValue::Record(values) => write_record(values, f),
             WanderValue::PartialApplication(_) => write!(f, "[application]"),
             WanderValue::Lambda(_, _, _, _) => write!(f, "[lambda]"),

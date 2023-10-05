@@ -111,3 +111,19 @@ fn define_and_partially_call_lambda() {
     );
     assert_eq!(res, expected);
 }
+
+#[test]
+fn group_a_value() {
+    let input = "(true)";
+    let res = run(input, &mut common::<NoHostType>()).unwrap();
+    let expected = WanderValue::Boolean(true);
+    assert_eq!(res, expected);
+}
+
+#[test]
+fn group_a_function_call() {
+    let input = "Bool.and false (Bool.not true)";
+    let res = run(input, &mut common::<NoHostType>()).unwrap();
+    let expected = WanderValue::Boolean(true);
+    assert_eq!(res, expected);
+}
