@@ -3,12 +3,16 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use logos::{Lexer, Logos};
+use serde::Serialize;
 
 use crate::{bindings::Bindings, WanderError};
 
-#[derive(Logos, Debug, PartialEq, Clone)]
-#[logos(skip r"[ \t\n\f\r]+")]
+#[derive(Logos, Debug, PartialEq, Clone, Serialize)]
+#[logos()]
 pub enum Token {
+    #[regex("[ \t\n\r]+", ws)]
+    WS(String),
+
     #[token("let")]
     Let,
 
@@ -125,6 +129,10 @@ fn name(lex: &mut Lexer<Token>) -> Option<String> {
     Some(lex.slice().to_string())
 }
 
+fn ws(lex: &mut Lexer<Token>) -> Option<String> {
+    Some(lex.slice().to_string())
+}
+
 pub fn tokenize(script: &str) -> Result<Vec<Token>, WanderError> {
     let lexer = Token::lexer(script);
     let mut results = vec![];
@@ -134,8 +142,15 @@ pub fn tokenize(script: &str) -> Result<Vec<Token>, WanderError> {
             Err(_) => return Err(WanderError(String::from("Error tokenizing input."))),
         }
     }
-    results.retain(|token| !matches!(token, Token::Comment));
     Ok(results)
+}
+
+pub fn tokenize_and_filter(script: &str) -> Result<Vec<Token>, WanderError> {
+    let tokens = tokenize(script);
+    tokens.map(|mut tokens| {
+        tokens.retain(|token| !matches!(token, Token::Comment) && !matches!(token, Token::WS(_)));
+        tokens
+    })
 }
 
 pub fn transform<T: Clone + PartialEq + Eq>(

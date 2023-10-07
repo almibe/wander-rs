@@ -13,7 +13,7 @@ use std::{
 
 use bindings::Bindings;
 use interpreter::eval;
-use lexer::{tokenize, transform, Token};
+use lexer::{tokenize, transform, Token, tokenize_and_filter};
 use parser::{parse, Element};
 use serde::{Deserialize, Serialize};
 use translation::translate;
@@ -272,16 +272,18 @@ pub fn run<T: Clone + Display + PartialEq + Eq>(
     script: &str,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
-    let tokens = tokenize(script)?;
+    let tokens = tokenize_and_filter(script)?;
     let tokens = transform(&tokens, bindings)?;
     let elements = parse(tokens)?;
     let elements = translate(elements)?;
     eval(&elements, bindings)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 /// Structure used for debugging or inspecting code.
 pub struct Introspection {
+    ///
+    pub tokens_ws: Vec<Token>,
     ///
     pub tokens: Vec<Token>,
     ///
@@ -297,11 +299,13 @@ pub fn introspect<T: Clone + PartialEq + Eq>(
     script: &str,
     bindings: &Bindings<T>,
 ) -> Result<Introspection, WanderError> {
-    let tokens = tokenize(script)?;
+    let tokens_ws = tokenize(script)?;
+    let tokens = tokenize_and_filter(script)?;
     let tokens_transformed = transform(&tokens.clone(), bindings)?;
     let elements = parse(tokens_transformed.clone())?;
     let elements_translated = translate(elements.clone())?;
     Ok(Introspection {
+        tokens_ws,
         tokens,
         tokens_transformed,
         elements,
