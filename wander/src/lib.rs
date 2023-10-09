@@ -50,7 +50,7 @@ pub struct HostFunctionBinding {
     /// Name used to bind this HostFunction including Namespaces.
     pub name: String,
     /// The type of the parameters this HostFunction takes.
-    pub parameters: Vec<WanderType>,
+    pub parameters: Vec<(String, WanderType)>,
     /// The type of the result of this HostFunction.
     pub result: WanderType,
     /// The documentation for this HostFunction.
@@ -87,8 +87,6 @@ pub enum WanderType {
     String,
     /// The nothing value.
     Nothing,
-    /// A named reference to a NativeFunction.
-    HostFunction,
     /// A Lambda.
     Lambda,
     /// A List.
@@ -120,14 +118,10 @@ pub enum WanderValue<T: Clone + PartialEq + Eq> {
     String(String),
     /// The nothing value.
     Nothing,
-    /// A named reference to a HostedFunction.
-    HostedFunction(String),
     /// The old style of Lambda in Wander.
     DeprecatedLambda(Vec<String>, Vec<Element>),
     /// A Lambda
     Lambda(String, WanderType, WanderType, Box<Element>),
-    /// A ParitalApplication.
-    PartialApplication(Box<PartialApplication<T>>),
     /// A List.
     List(Vec<WanderValue<T>>),
     /// A Tuple.
@@ -252,7 +246,6 @@ impl<T: Clone + Display + PartialEq + Eq> Display for WanderValue<T> {
             WanderValue::Int(value) => write!(f, "{}", value),
             WanderValue::String(value) => f.write_str(&write_string(value)),
             WanderValue::Nothing => write!(f, "nothing"),
-            WanderValue::HostedFunction(_) => write!(f, "[function]"),
             WanderValue::List(contents) => write_list_or_tuple_wander_value("[", ']', contents, f),
             WanderValue::DeprecatedLambda(_, _) => write!(f, "[lambda]"),
             WanderValue::HostValue(value) => write_host_value(value, f),
@@ -260,7 +253,6 @@ impl<T: Clone + Display + PartialEq + Eq> Display for WanderValue<T> {
                 write_list_or_tuple_wander_value("'(", ')', contents, f)
             }
             WanderValue::Record(values) => write_record(values, f),
-            WanderValue::PartialApplication(_) => write!(f, "[application]"),
             WanderValue::Lambda(_, _, _, _) => write!(f, "[lambda]"),
             WanderValue::Set(contents) => write_set(contents, f),
         }

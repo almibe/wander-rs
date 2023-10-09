@@ -26,7 +26,7 @@ impl<T: Clone + PartialEq + Eq> HostFunction<T> for EqFunction {
     fn binding(&self) -> HostFunctionBinding {
         HostFunctionBinding {
             name: "Core.eq".to_owned(),
-            parameters: vec![WanderType::Any, WanderType::Any],
+            parameters: vec![("left".to_owned(), WanderType::Any), ("right".to_owned(), WanderType::Any)],
             result: WanderType::Any,
             doc_string: "Check if two values are equal.".to_owned(),
         }
@@ -56,7 +56,7 @@ impl<T: Clone + PartialEq + Eq> HostFunction<T> for AssertEqFunction {
     fn binding(&self) -> HostFunctionBinding {
         HostFunctionBinding {
             name: "Assert.assertEq".to_owned(),
-            parameters: vec![WanderType::Any, WanderType::Any],
+            parameters: vec![("value".to_owned(), WanderType::Any), ("expected".to_owned(), WanderType::Any)],
             result: WanderType::Nothing,
             doc_string: "Assert that two values are equal.".to_owned(),
         }
@@ -82,7 +82,7 @@ impl<T: Clone + PartialEq + Eq> HostFunction<T> for AndFunction {
     fn binding(&self) -> HostFunctionBinding {
         HostFunctionBinding {
             name: "Bool.and".to_owned(),
-            parameters: vec![WanderType::Boolean, WanderType::Boolean],
+            parameters: vec![("left".to_owned(), WanderType::Boolean), ("right".to_owned(), WanderType::Boolean)],
             result: WanderType::Boolean,
             doc_string: "Check if two boolean values are both true.".to_owned(),
         }
@@ -108,7 +108,7 @@ impl<T: Clone + PartialEq + Eq> HostFunction<T> for NotFunction {
     fn binding(&self) -> HostFunctionBinding {
         HostFunctionBinding {
             name: "Bool.not".to_owned(),
-            parameters: vec![WanderType::Boolean],
+            parameters: vec![("value".to_owned(), WanderType::Boolean)],
             result: WanderType::Boolean,
             doc_string: "Return the opposite of the boolean value passed.".to_owned(),
         }
@@ -141,7 +141,7 @@ impl<T: Clone + PartialEq + Eq> HostFunction<T> for AtFunction {
     fn binding(&self) -> HostFunctionBinding {
         HostFunctionBinding {
             name: "List.at".to_owned(),
-            parameters: vec![WanderType::Int, WanderType::List],
+            parameters: vec![("offset".to_owned(), WanderType::Int), ("list".to_owned(), WanderType::List)],
             result: WanderType::Any,
             doc_string: "Get the value at a given location.".to_owned(),
         }

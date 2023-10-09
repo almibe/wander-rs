@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::{HostFunction, HostFunctionBinding, TokenTransformer, WanderValue};
+use crate::{HostFunction, HostFunctionBinding, TokenTransformer, WanderValue, WanderType, parser::Element};
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
@@ -69,7 +69,28 @@ impl<T: Clone + PartialEq + Eq> Bindings<T> {
     /// Add a new HostFunction.
     pub fn bind_host_function(&mut self, function: Rc<dyn HostFunction<T>>) {
         let full_name = function.binding().name.to_string();
-        self.host_functions.borrow_mut().insert(full_name, function);
+        self.host_functions.borrow_mut().insert(full_name.clone(), function.clone());
+        let mut p = function.binding().parameters.clone();
+        let mut result = None;
+        p.reverse();
+        p.iter().for_each(|p| {
+            match &result {
+                Some(value) => {
+                    match value {
+                        WanderValue::Lambda(innerp, i, o, b) => {
+                            let p = p.clone();
+                            result = Some(WanderValue::Lambda(p.0, p.1, WanderType::Any, Box::new(Element::Lambda(innerp.clone(), i.clone(), o.clone(), b.clone()))));
+                        },
+                        _ => panic!("Should never reach."),
+                    }
+                },
+                None => {
+                    let p = p.clone();
+                    result = Some(WanderValue::Lambda(p.0, p.1, WanderType::Any, Box::new(Element::HostFunction(full_name.clone()))));
+                },
+            }
+        });
+        self.bind(full_name, result.unwrap());
     }
 
     /// Read a HostFunction.
