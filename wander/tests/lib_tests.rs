@@ -70,7 +70,7 @@ fn run_scope() {
 
 #[test]
 fn run_conditional() {
-    let input = "if true if Bool.not(true) 5 else 6 else 7";
+    let input = "if true then if Bool.not true then 5 else 6 else 7";
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Int(6));
     assert_eq!(res, expected);
@@ -108,21 +108,29 @@ fn run_lambda() {
     assert_eq!(res, expected);
 }
 
-//#[test]
-fn run_lambda_with_function() {
-    let input = r#"
-    let
-        val id = \x -> x
-    in
-        id [(Bool.not true) (Bool.not false)]
-    end"#;
+#[test]
+fn host_function_calls() {
+    let input = r#"Bool.not true"#;
     let res = run(input, &mut common::<NoHostType>());
-    let expected = Ok(WanderValue::List(vec![
-        WanderValue::Boolean(false),
-        WanderValue::Boolean(true),
-    ]));
+    let expected = Ok(WanderValue::Boolean(false));
     assert_eq!(res, expected);
 }
+
+// #[test]
+// fn run_lambda_with_host_function_calls() {
+//     let input = r#"
+//     let
+//         val id = \x -> x
+//     in
+//         id [(Bool.not true) (Bool.not false)]
+//     end"#;
+//     let res = run(input, &mut common::<NoHostType>());
+//     let expected = Ok(WanderValue::List(vec![
+//         WanderValue::Boolean(false),
+//         WanderValue::Boolean(true),
+//     ]));
+//     assert_eq!(res, expected);
+// }
 
 #[test]
 fn forward_operator() {

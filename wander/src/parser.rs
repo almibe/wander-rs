@@ -16,10 +16,9 @@ pub enum Element {
     Int(i64),
     String(String),
     Name(String),
-    HostFunction(String), //refers to HostFunctions by name
+    HostFunction(String),
     Let(Vec<(String, Element)>, Box<Element>),
-    Grouping(Box<Element>),
-    FunctionCall(Vec<Element>),
+    Application(Vec<Element>),
     Conditional(Box<Element>, Box<Element>, Box<Element>),
     Lambda(String, WanderType, WanderType, Box<Element>),
     Tuple(Vec<Element>),
@@ -73,9 +72,21 @@ fn forward(gaze: &mut Gaze<Token>) -> Option<Element> {
 }
 
 fn name(gaze: &mut Gaze<Token>) -> Option<Element> {
-    match gaze.next() {
+    let name = match gaze.next() {
         Some(Token::Name(value)) => Some(Element::Name(value)),
-        _ => None,
+        _ => return None,
+    };
+    
+    let mut exprs = vec![];
+    while let Some(element) = gaze.attemptf(&mut expression) {
+        exprs.push(element);
+    }
+
+    if exprs.is_empty() {
+        name
+    } else {
+        exprs.insert(0, name.unwrap());
+        Some(Element::Application(exprs))
     }
 }
 
@@ -107,43 +118,54 @@ fn let_scope(gaze: &mut Gaze<Token>) -> Option<Element> {
     }
 }
 
-fn function_call(gaze: &mut Gaze<Token>) -> Option<Element> {
+fn application(gaze: &mut Gaze<Token>) -> Option<Element> {
     let mut expressions: Vec<Element> = vec![];
-    while let Some(e) = gaze.attemptf(&mut expression) {
-        expressions.push(e);
-    }
 
-    if expressions.is_empty() {
-        None
-    } else {
-        Some(Element::FunctionCall(expressions))
-    }
-}
-
-fn grouping(gaze: &mut Gaze<Token>) -> Option<Element> {
     match gaze.next() {
         Some(Token::OpenParen) => (),
         _ => return None,
     }
 
-    let body = gaze.attemptf(&mut element)?;
+    while let Some(e) = gaze.attemptf(&mut expression) {
+        expressions.push(e);
+    }
 
     match gaze.next() {
-        Some(Token::CloseParen) => Some(Element::Grouping(Box::new(body))),
+        Some(Token::CloseParen) => Some(Element::Application(expressions)),
         _ => return None,
     }
 }
+
+// fn grouping(gaze: &mut Gaze<Token>) -> Option<Element> {
+//     match gaze.next() {
+//         Some(Token::OpenParen) => (),
+//         _ => return None,
+//     }
+
+//     let body = gaze.attemptf(&mut element)?;
+
+//     match gaze.next() {
+//         Some(Token::CloseParen) => Some(Element::Grouping(Box::new(body))),
+//         _ => return None,
+//     }
+// }
 
 fn conditional(gaze: &mut Gaze<Token>) -> Option<Element> {
     match gaze.next() {
         Some(Token::If) => (),
         _ => return None,
     }
-    let cond = match gaze.attemptf(&mut element) {
+    let cond = match gaze.attemptf(&mut expression) {
         Some(d) => d,
         None => return None,
     };
-    let ife = match gaze.attemptf(&mut element) {
+    
+    match gaze.next() {
+        Some(Token::Then) => (),
+        _ => return None,
+    }
+
+    let ife = match gaze.attemptf(&mut expression) {
         Some(d) => d,
         None => return None,
     };
@@ -152,10 +174,15 @@ fn conditional(gaze: &mut Gaze<Token>) -> Option<Element> {
     } else {
         return None;
     }
-    let elsee = match gaze.attemptf(&mut element) {
+    let elsee = match gaze.attemptf(&mut expression) {
         Some(d) => d,
         None => return None,
     };
+    if let Some(Token::End) = gaze.next() {
+        //do nothing
+    } else {
+        return None;
+    }
     Some(Element::Conditional(
         Box::new(cond),
         Box::new(ife),
@@ -213,7 +240,7 @@ fn list(gaze: &mut Gaze<Token>) -> Option<Element> {
     }
 
     let mut contents = vec![];
-    while let Some(e) = gaze.attemptf(&mut element) {
+    while let Some(e) = gaze.attemptf(&mut expression) {
         contents.push(e)
     }
 
@@ -309,7 +336,7 @@ fn decl(gaze: &mut Gaze<Token>) -> Option<Element> {
         tuple,
         set,
         record,
-        function_call,
+        application,
         name,
         boolean,
         nothing,
@@ -340,7 +367,7 @@ fn expression(gaze: &mut Gaze<Token>) -> Option<Element> {
         int,
         string,
         let_scope,
-        grouping,
+        application,
         conditional,
         lambda,
         list,
@@ -358,7 +385,6 @@ fn element(gaze: &mut Gaze<Token>) -> Option<Element> {
         tuple,
         set,
         record,
-        function_call,
         name,
         boolean,
         nothing,
@@ -366,7 +392,7 @@ fn element(gaze: &mut Gaze<Token>) -> Option<Element> {
         int,
         string,
         let_scope,
-        grouping,
+        application,
         conditional,
         lambda,
         list,

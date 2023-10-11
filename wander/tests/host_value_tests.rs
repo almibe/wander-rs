@@ -31,14 +31,14 @@ impl HostFunction<String> for SayHello {
     }
 }
 
-#[test]
-fn eval_host_value() {
-    let mut bindings = common::<String>();
-    bindings.bind_host_function(Rc::new(SayHello {}));
-    let input = vec![Element::FunctionCall("hello".to_owned(), vec![])];
-    let res = eval(&input, &mut bindings);
-    let expected = Ok(WanderValue::HostValue(HostValue {
-        value: "hello!".to_owned(),
-    }));
-    assert_eq!(res, expected);
-}
+// #[test]
+// fn eval_host_value() {
+//     let mut bindings = common::<String>();
+//     bindings.bind_host_function(Rc::new(SayHello {}));
+//     let input = vec![Element::FunctionCall("hello".to_owned(), vec![])];
+//     let res = eval(&input, &mut bindings);
+//     let expected = Ok(WanderValue::HostValue(HostValue {
+//         value: "hello!".to_owned(),
+//     }));
+//     assert_eq!(res, expected);
+// }

@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::{HostFunction, HostFunctionBinding, TokenTransformer, WanderValue, WanderType, parser::Element};
+use crate::{HostFunction, HostFunctionBinding, TokenTransformer, WanderValue, WanderType, parser::Element, interpreter::Expression};
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},

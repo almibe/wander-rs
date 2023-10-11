@@ -31,6 +31,9 @@ pub enum Token {
     #[token("if")]
     If,
 
+    #[token("then")]
+    Then,
+
     #[token("else")]
     Else,
 

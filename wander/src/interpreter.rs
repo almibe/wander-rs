@@ -2,74 +2,62 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 
+use serde::{Serialize, Deserialize};
+
 use crate::bindings::Bindings;
+
 use crate::parser::Element;
+use crate::translation::express;
 use crate::{WanderError, WanderType, WanderValue};
 
-// #[doc(hidden)]
-// #[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
-// pub enum Expression {
-//     Boolean(bool),
-//     Int(i64),
-//     String(String),
-//     Name(String),
-//     HostFunction(String), //refers to HostFunctions by name
-//     Let(Vec<(String, Element)>, Box<Element>),
-//     FunctionCall(Vec<Element>),
-//     Conditional(Box<Element>, Box<Element>, Box<Element>),
-//     Lambda(String, WanderType, WanderType, Box<Element>),
-//     Tuple(Vec<Element>),
-//     List(Vec<Element>),
-//     Set(HashSet<Element>),
-//     Record(HashMap<String, Element>),
-//     Nothing,
-//     Forward,
-// }
-
-pub fn eval<T: Clone + Display + PartialEq + Eq>(
-    script: &Vec<Element>,
-    bindings: &mut Bindings<T>,
-) -> Result<WanderValue<T>, WanderError> {
-    let mut result = WanderValue::Nothing;
-    for element in script {
-        match result {
-            WanderValue::Lambda(ref name, _input, _output, ref body) => {
-                let argument = eval_element(element, bindings)?;
-                bindings.bind(name.clone(), argument);
-                result = eval_element(body, bindings)?;
-            }
-
-            _ => result = eval_element(element, bindings)?,
-        }
-    }
-    Ok(result)
+#[doc(hidden)]
+#[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
+pub enum Expression {
+    Boolean(bool),
+    Int(i64),
+    String(String),
+    Name(String),
+    HostFunction(String),
+    Let(Vec<(String, Expression)>, Box<Expression>),
+    Application(Vec<Expression>),
+    Conditional(Box<Expression>, Box<Expression>, Box<Expression>),
+    Lambda(String, WanderType, WanderType, Box<Element>),
+    Tuple(Vec<Expression>),
+    List(Vec<Expression>),
+    Set(HashSet<Expression>),
+    Record(HashMap<String, Expression>),
+    Nothing,
 }
 
-pub fn eval_element<T: Clone + Display + PartialEq + Eq>(
-    element: &Element,
+impl core::hash::Hash for Expression {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(self).hash(state);
+    }
+}
+
+pub fn eval<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+    expression: &Expression,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
-    match element {
-        Element::Boolean(value) => Ok(WanderValue::Boolean(*value)),
-        Element::Int(value) => Ok(WanderValue::Int(*value)),
-        Element::String(value) => Ok(WanderValue::String(unescape_string(value.to_string()))),
-        Element::Let(decls, body) => handle_let(decls.clone(), *body.clone(), bindings),
-        Element::Name(name) => read_name(name, bindings),
-        Element::FunctionCall(expressions) => handle_function_call(expressions, bindings),
-        Element::Conditional(c, i, e) => handle_conditional(c, i, e, bindings),
-        Element::List(values) => handle_list(values, bindings),
-        Element::Nothing => Ok(WanderValue::Nothing),
-        Element::Forward => panic!("Should never reach."),
-        Element::Tuple(values) => handle_tuple(values, bindings),
-        Element::Record(values) => handle_record(values, bindings),
-        Element::Lambda(name, input, output, body) => handle_lambda(name, input, output, body),
-        Element::Set(values) => handle_set(values, bindings),
-        Element::HostFunction(name) => handle_host_function(name, bindings),
-        Element::Grouping(element) => eval_element(element, bindings),
+    match expression {
+        Expression::Boolean(value) => Ok(WanderValue::Boolean(*value)),
+        Expression::Int(value) => Ok(WanderValue::Int(*value)),
+        Expression::String(value) => Ok(WanderValue::String(unescape_string(value.to_string()))),
+        Expression::Let(decls, body) => handle_let(decls.clone(), *body.clone(), bindings),
+        Expression::Name(name) => read_name(name, bindings),
+        Expression::Application(expressions) => handle_function_call(expressions, bindings),
+        Expression::Conditional(c, i, e) => handle_conditional(c, i, e, bindings),
+        Expression::List(values) => handle_list(values, bindings),
+        Expression::Nothing => Ok(WanderValue::Nothing),
+        Expression::Tuple(values) => handle_tuple(values, bindings),
+        Expression::Record(values) => handle_record(values, bindings),
+        Expression::Lambda(name, input, output, body) => handle_lambda(name, input, output, body),
+        Expression::Set(values) => handle_set(values, bindings),
+        Expression::HostFunction(name) => handle_host_function(name, bindings),
+        // Expression::Grouping(expressions) => handle_grouping(expressions.clone(), bindings),
     }
 }
 
@@ -129,13 +117,13 @@ fn handle_host_function<T: Clone + Display + PartialEq + Eq>(name: &str, binding
     host_function.run(&arguments, bindings)
 }
 
-fn handle_set<T: Clone + Display + PartialEq + Eq>(
-    elements: &HashSet<Element>,
+fn handle_set<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+    expressions: &HashSet<Expression>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     let mut results = HashSet::new();
-    for element in elements {
-        match eval_element(element, bindings) {
+    for expression in expressions {
+        match eval(expression, bindings) {
             Ok(value) => results.insert(value),
             Err(err) => return Err(err),
         };
@@ -143,13 +131,13 @@ fn handle_set<T: Clone + Display + PartialEq + Eq>(
     Ok(WanderValue::Set(results))
 }
 
-fn handle_tuple<T: Clone + Display + PartialEq + Eq>(
-    elements: &Vec<Element>,
+fn handle_tuple<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+    expressions: &Vec<Expression>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     let mut results = vec![];
-    for element in elements {
-        match eval_element(element, bindings) {
+    for expression in expressions {
+        match eval(expression, bindings) {
             Ok(value) => results.push(value),
             Err(err) => return Err(err),
         }
@@ -157,13 +145,13 @@ fn handle_tuple<T: Clone + Display + PartialEq + Eq>(
     Ok(WanderValue::Tuple(results))
 }
 
-fn handle_record<T: Clone + Display + PartialEq + Eq>(
-    elements: &HashMap<String, Element>,
+fn handle_record<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+    expressions: &HashMap<String, Expression>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     let mut results = HashMap::new();
-    for (name, element) in elements {
-        match eval_element(element, bindings) {
+    for (name, expression) in expressions {
+        match eval(expression, bindings) {
             Ok(value) => results.insert(name.to_owned(), value),
             Err(err) => return Err(err),
         };
@@ -171,13 +159,13 @@ fn handle_record<T: Clone + Display + PartialEq + Eq>(
     Ok(WanderValue::Record(results))
 }
 
-fn handle_list<T: Clone + Display + PartialEq + Eq>(
-    elements: &Vec<Element>,
+fn handle_list<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+    expressions: &Vec<Expression>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     let mut results = vec![];
-    for element in elements {
-        match eval_element(element, bindings) {
+    for expression in expressions {
+        match eval(expression, bindings) {
             Ok(value) => results.push(value),
             Err(err) => return Err(err),
         }
@@ -199,48 +187,75 @@ fn handle_lambda<T: Clone + PartialEq + Eq>(
     ))
 }
 
-fn handle_conditional<T: Clone + Display + PartialEq + Eq>(
-    cond: &Element,
-    ife: &Element,
-    elsee: &Element,
+fn handle_conditional<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+    cond: &Expression,
+    ife: &Expression,
+    elsee: &Expression,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
-    match eval_element(cond, bindings)? {
-        WanderValue::Boolean(true) => eval_element(ife, bindings),
-        WanderValue::Boolean(false) => eval_element(elsee, bindings),
+    match eval(cond, bindings)? {
+        WanderValue::Boolean(true) => eval(ife, bindings),
+        WanderValue::Boolean(false) => eval(elsee, bindings),
         value => Err(WanderError(format!(
             "Conditionals require a bool value found, {value}"
         ))),
     }
 }
 
-fn handle_function_call<T: Clone + Display + PartialEq + Eq>(
-    expressions: &Vec<Element>,
+fn handle_function_call<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+    expressions: &Vec<Expression>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     let mut expressions = expressions.clone();
     expressions.reverse();
     while !expressions.is_empty() {
         let expression = expressions.pop().unwrap();
-        match eval_element(&expression, bindings)? {
-            WanderValue::Lambda(name, input, output, body) => {
+        match expression {
+            Expression::Lambda(name, input, output, lambda_body) => {
                 if expressions.is_empty() {
-                    return Ok(WanderValue::Lambda(name, input, output, body))
+                    return Ok(WanderValue::Lambda(name, input, output, lambda_body))
                 } else {
-                    let expression = expressions.pop().unwrap();
-                    let res = eval_element(&expression, bindings)?;
-                    bindings.bind(name, res);
-                    match eval_element(&body, bindings) {
-                        Ok(value) => expressions.push(value_to_element(value)),
-                        Err(err) => return Err(err),
-                    }                    
+                    let argument_expression = expressions.pop().unwrap();
+                    let argument_value = eval(&argument_expression, bindings)?;
+                    bindings.bind(name, argument_value);
+                    let function = eval(&express(&lambda_body)?, bindings)?;
+                    match function {
+                        WanderValue::Lambda(_, _, _, b) => {
+                            match eval(&express(&b)?, bindings) {
+                                Ok(value) => expressions.push(value_to_expression(value)),
+                                Err(err) => return Err(err),
+                            }                            
+                        },
+                        _ => if expressions.is_empty() {
+                            return Ok(function)
+                        } else {
+                            return Err(WanderError(format!("Invalid function call.")))
+                        },
+                    }
+                }
+            },
+            Expression::Name(name) => {
+                match eval(&Expression::Name(name), bindings) {
+                    Ok(value) => match value {
+                        WanderValue::Lambda(p, i, o, b) => {
+                            let argument_expression = expressions.pop().unwrap();
+                            let argument_value = eval(&argument_expression, bindings)?;
+                            bindings.bind(p, argument_value);        
+                            match eval(&express(&b)?, bindings) {
+                                Ok(value) => expressions.push(value_to_expression(value)),
+                                Err(err) => return Err(err),
+                            }
+                        },
+                        _ => return Err(WanderError(format!("Invalid function call.")))
+                    },
+                    Err(err) => return Err(err),
                 }
             },
             value => {
                 if expressions.is_empty() {
-                    return Ok(value)
+                    return eval(&value, bindings)
                 } else {
-                    return Err(WanderError("Invalid function call.".to_owned()))
+                    return Err(WanderError(format!("Invalid function call {value:?}.")))
                 }
             }
         };
@@ -248,14 +263,13 @@ fn handle_function_call<T: Clone + Display + PartialEq + Eq>(
     panic!()
 }
 
-fn value_to_element<T: Clone + Display + PartialEq + Eq>(value: WanderValue<T>) -> Element {
+fn value_to_expression<T: Clone + Display + PartialEq + Eq>(value: WanderValue<T>) -> Expression {
     match value {
-        WanderValue::Boolean(value) => Element::Boolean(value),
-        WanderValue::Int(value) => Element::Int(value),
-        WanderValue::String(value) => Element::String(value),
-        WanderValue::Nothing => Element::Nothing,
-        WanderValue::DeprecatedLambda(_, _) => todo!(),
-        WanderValue::Lambda(p, i, o, b) => Element::Lambda(p, i, o, b),
+        WanderValue::Boolean(value) => Expression::Boolean(value),
+        WanderValue::Int(value) => Expression::Int(value),
+        WanderValue::String(value) => Expression::String(value),
+        WanderValue::Nothing => Expression::Nothing,
+        WanderValue::Lambda(p, i, o, b) => Expression::Lambda(p, i, o, b),
         WanderValue::List(value) => todo!(),
         WanderValue::Tuple(value) => todo!(),
         WanderValue::Set(value) => todo!(),
@@ -264,24 +278,24 @@ fn value_to_element<T: Clone + Display + PartialEq + Eq>(value: WanderValue<T>) 
     }
 }
 
-fn handle_let<T: Clone + Display + PartialEq + Eq>(
-    decls: Vec<(String, Element)>,
-    body: Element,
+fn handle_let<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+    decls: Vec<(String, Expression)>,
+    body: Expression,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
 
     for (name, body) in decls {
-        handle_decl(name, body, bindings);
+        handle_decl(name, body, bindings)?;
     }
-    eval_element(&body, bindings)
+    eval(&body, bindings)
 }
 
-fn handle_decl<T: Clone + Display + PartialEq + Eq>(
+fn handle_decl<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
     name: String,
-    body: Element,
+    body: Expression,
     bindings: &mut Bindings<T>,
 ) -> Result<(), WanderError> {
-    match eval_element(&body, bindings) {
+    match eval(&body, bindings) {
         Ok(value) => {
             bindings.bind(name.to_string(), value);
             Ok(())        
@@ -290,7 +304,7 @@ fn handle_decl<T: Clone + Display + PartialEq + Eq>(
     }
 }
 
-fn read_name<T: Clone + PartialEq + Display + Eq>(
+fn read_name<T: Clone + PartialEq + Display + Eq + std::fmt::Debug>(
     name: &String,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -304,7 +318,7 @@ fn read_name<T: Clone + PartialEq + Display + Eq>(
     }
 }
 
-fn read_field<T: Clone + PartialEq + Display + Eq>(
+fn read_field<T: Clone + PartialEq + Display + Eq + std::fmt::Debug>(
     name: &str,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -335,47 +349,19 @@ fn read_field<T: Clone + PartialEq + Display + Eq>(
     }
 }
 
-fn call_function<T: Clone + Display + PartialEq + Eq>(
+fn call_function<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
     name: &String,
-    arguments: &Vec<Element>,
+    arguments: &Vec<Expression>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     let mut argument_values = vec![];
     for argument in arguments {
-        match eval_element(argument, bindings) {
+        match eval(argument, bindings) {
             Ok(value) => argument_values.push(value),
             Err(err) => return Err(err),
         }
     }
     match bindings.read(name) {
-        Some(WanderValue::DeprecatedLambda(parameters, body)) => {
-            match parameters.len().cmp(&arguments.len()) {
-                Ordering::Equal => {
-                    bindings.add_scope();
-                    for (i, parameter) in parameters.iter().enumerate() {
-                        bindings.bind(
-                            parameter.to_owned(),
-                            argument_values.get(i).unwrap().clone(),
-                        );
-                    }
-                    let res = eval(&body, bindings);
-                    bindings.remove_scope();
-                    res
-                }
-                Ordering::Less => Err(WanderError(format!(
-                    "Incorrect number of arguments, {}, passed to {}, expecting {}.",
-                    arguments.len(),
-                    name,
-                    parameters.len()
-                ))),
-                Ordering::Greater => todo!(), //Ok(WanderValue::PartialApplication(Box::new(
-                    // PartialApplication {
-                    //     arguments: argument_values,
-                    //     callee: WanderValue::DeprecatedLambda(parameters, body),
-                    // },
-                //))),
-            }
-        }
         //found other value (err), will evntually handle lambdas here
         Some(_) => Err(WanderError(format!("Function {} is not defined.", &name))),
         None => match bindings.read_host_function(name) {

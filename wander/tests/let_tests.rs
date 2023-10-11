@@ -14,7 +14,7 @@ fn basic_let() {
 
 #[test]
 fn basic_let_multiple_vals() {
-    let input = "let val x = true val y = Bool.and(x false) in Bool.and(x y) end";
+    let input = "let val x = true val y = Bool.and x in y x end";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let expected = WanderValue::Boolean(false);
     assert_eq!(res, expected);

@@ -8,15 +8,15 @@
 
 use std::{
     collections::{HashMap, HashSet},
-    fmt::{Display, Write},
+    fmt::{Display, Write, Debug},
 };
 
 use bindings::Bindings;
-use interpreter::eval;
+use interpreter::{eval, Expression};
 use lexer::{tokenize, transform, Token, tokenize_and_filter};
 use parser::{parse, Element};
 use serde::{Deserialize, Serialize};
-use translation::translate;
+use translation::{translate, translate_all};
 
 #[doc(hidden)]
 pub mod bindings;
@@ -118,8 +118,6 @@ pub enum WanderValue<T: Clone + PartialEq + Eq> {
     String(String),
     /// The nothing value.
     Nothing,
-    /// The old style of Lambda in Wander.
-    DeprecatedLambda(Vec<String>, Vec<Element>),
     /// A Lambda
     Lambda(String, WanderType, WanderType, Box<Element>),
     /// A List.
@@ -182,7 +180,7 @@ pub fn write_string(string: &str) -> String {
     format!("\"{}\"", escaped_string)
 }
 
-fn write_list_or_tuple_wander_value<T: Clone + Display + PartialEq + Eq>(
+fn write_list_or_tuple_wander_value<T: Clone + Display + PartialEq + Eq + Debug>(
     open: &str,
     close: char,
     contents: &Vec<WanderValue<T>>,
@@ -200,7 +198,7 @@ fn write_list_or_tuple_wander_value<T: Clone + Display + PartialEq + Eq>(
     write!(f, "{close}")
 }
 
-fn write_set<T: Clone + Display + PartialEq + Eq>(
+fn write_set<T: Clone + Display + PartialEq + Eq + Debug>(
     contents: &HashSet<WanderValue<T>>,
     f: &mut std::fmt::Formatter<'_>,
 ) -> std::fmt::Result {
@@ -223,7 +221,7 @@ fn write_host_value<T: Display + PartialEq + Eq>(
     write!(f, "{}", value.value)
 }
 
-fn write_record<T: Clone + Display + PartialEq + Eq>(
+fn write_record<T: Clone + Display + PartialEq + Eq + Debug>(
     contents: &HashMap<String, WanderValue<T>>,
     f: &mut std::fmt::Formatter<'_>,
 ) -> std::fmt::Result {
@@ -239,7 +237,7 @@ fn write_record<T: Clone + Display + PartialEq + Eq>(
     write!(f, "}}")
 }
 
-impl<T: Clone + Display + PartialEq + Eq> Display for WanderValue<T> {
+impl<T: Clone + Display + PartialEq + Eq + std::fmt::Debug> Display for WanderValue<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             WanderValue::Boolean(value) => write!(f, "{}", value),
@@ -247,28 +245,27 @@ impl<T: Clone + Display + PartialEq + Eq> Display for WanderValue<T> {
             WanderValue::String(value) => f.write_str(&write_string(value)),
             WanderValue::Nothing => write!(f, "nothing"),
             WanderValue::List(contents) => write_list_or_tuple_wander_value("[", ']', contents, f),
-            WanderValue::DeprecatedLambda(_, _) => write!(f, "[lambda]"),
             WanderValue::HostValue(value) => write_host_value(value, f),
             WanderValue::Tuple(contents) => {
                 write_list_or_tuple_wander_value("'(", ')', contents, f)
             }
             WanderValue::Record(values) => write_record(values, f),
-            WanderValue::Lambda(_, _, _, _) => write!(f, "[lambda]"),
+            WanderValue::Lambda(p, i, o, b) => write!(f, "[lambda {:?}]", WanderValue::Lambda::<T>(p.clone(), i.clone(), o.clone() ,b.clone())),
             WanderValue::Set(contents) => write_set(contents, f),
         }
     }
 }
 
 /// Run a Wander script with the given Bindings.
-pub fn run<T: Clone + Display + PartialEq + Eq>(
+pub fn run<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
     script: &str,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     let tokens = tokenize_and_filter(script)?;
     let tokens = transform(&tokens, bindings)?;
     let elements = parse(tokens)?;
-    let elements = translate(elements)?;
-    eval(&elements, bindings)
+    let expressions = translate(elements)?;
+    eval(&expressions, bindings)
 }
 
 #[derive(Debug, Serialize)]
@@ -283,7 +280,7 @@ pub struct Introspection {
     ///
     pub elements: Vec<Element>,
     ///
-    pub elements_translated: Vec<Element>,
+    pub expressions: Vec<Expression>,
 }
 
 /// Run a Wander script with the given Bindings.
@@ -295,12 +292,12 @@ pub fn introspect<T: Clone + PartialEq + Eq>(
     let tokens = tokenize_and_filter(script)?;
     let tokens_transformed = transform(&tokens.clone(), bindings)?;
     let elements = parse(tokens_transformed.clone())?;
-    let elements_translated = translate(elements.clone())?;
+    let expressions = translate_all(elements.clone())?;
     Ok(Introspection {
         tokens_ws,
         tokens,
         tokens_transformed,
         elements,
-        elements_translated,
+        expressions,
     })
 }
