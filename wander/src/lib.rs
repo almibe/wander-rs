@@ -236,7 +236,7 @@ fn write_record<T: Clone + Display + PartialEq + Eq + Debug>(
     write!(f, "{{").unwrap();
     let mut i = 0;
     for (name, value) in contents {
-        write!(f, "{name}: {value}").unwrap();
+        write!(f, "{name} = {value}").unwrap();
         i += 1;
         if i < contents.len() {
             write!(f, " ").unwrap();

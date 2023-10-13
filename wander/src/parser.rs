@@ -252,7 +252,7 @@ fn record(gaze: &mut Gaze<Token>) -> Option<Element> {
     let mut contents = HashMap::new();
     while let Some(Element::Name(name)) = gaze.attemptf(&mut name) {
         match gaze.next() {
-            Some(Token::Colon) => (),
+            Some(Token::EqualSign) => (),
             _ => return None,
         };
         match gaze.attemptf(&mut element) {

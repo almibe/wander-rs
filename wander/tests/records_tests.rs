@@ -7,7 +7,7 @@ use wander::{preludes::common, run, NoHostType, WanderValue};
 
 #[test]
 fn basic_record() {
-    let input = "{a: 24}";
+    let input = "{a = 24}";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let res = format!("{res}");
     let res = run(&res, &mut common::<NoHostType>()).unwrap();
@@ -19,7 +19,7 @@ fn basic_record() {
 
 #[test]
 fn nested_record() {
-    let input = "{a: 24 b: \"c\" c: {d: '(\"e\")}}";
+    let input = "{a = 24 b = \"c\" c = {d = '(\"e\")}}";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let res = format!("{res}");
     let res = run(&res, &mut common::<NoHostType>()).unwrap();
@@ -41,7 +41,7 @@ fn nested_record() {
 
 #[test]
 fn record_field_access() {
-    let input = "let val x = {a: 24 b: true} in x.b end";
+    let input = "let val x = {a = 24 b = true} in x.b end";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let expected = WanderValue::Boolean(true);
     assert_eq!(res, expected);
@@ -49,7 +49,7 @@ fn record_field_access() {
 
 #[test]
 fn nested_record_field_access() {
-    let input = "let val x = {a: 45 b: {a: 45}} in x.b.a end";
+    let input = "let val x = {a = 45 b = {a = 45}} in x.b.a end";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let expected = WanderValue::Int(45);
     assert_eq!(res, expected);
@@ -57,7 +57,7 @@ fn nested_record_field_access() {
 
 #[test]
 fn nested_record_field_access2() {
-    let input = "let val x = {a: 24 b: {a: [] b: {c: 45}}} in x.b.b.c end";
+    let input = "let val x = {a = 24 b = {a = [] b = {c = 45}}} in x.b.b.c end";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let expected = WanderValue::Int(45);
     assert_eq!(res, expected);
@@ -65,21 +65,21 @@ fn nested_record_field_access2() {
 
 #[test]
 fn missing_record_field_access() {
-    let input = "let val x = (a: 24 b: true) in x.c end";
+    let input = "let val x = (a = 24 b = true) in x.c end";
     let res = run(input, &mut common::<NoHostType>());
     assert!(res.is_err());
 }
 
 #[test]
 fn nested_missing_record_field_access() {
-    let input = "val x = (a: 24 b: (a: [], b: (c: 45))) x.b.b.d";
+    let input = "val x = (a = 24 b = (a = [], b = (c = 45))) x.b.b.d";
     let res = run(input, &mut common::<NoHostType>());
     assert!(res.is_err());
 }
 
 #[test]
 fn nested_missing_record_field_access2() {
-    let input = "val x = (a: 24 b: (a: [], b: (c: 45))) x.c.b.d";
+    let input = "val x = (a = 24 b = (a = [], b = (c = 45))) x.c.b.d";
     let res = run(input, &mut common::<NoHostType>());
     assert!(res.is_err());
 }
