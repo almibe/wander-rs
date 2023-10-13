@@ -206,6 +206,12 @@ fn handle_function_call<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
     expressions: &Vec<Expression>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
+    if expressions.len() == 1 {
+        match expressions.first().unwrap() {
+            Expression::Application(body) => panic!("Should never reach, {body:?}!"),
+            expression => return eval(expression, bindings)
+        }
+    }
     let mut expressions = expressions.clone();
     expressions.reverse();
     while !expressions.is_empty() {
@@ -229,7 +235,7 @@ fn handle_function_call<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
                         _ => if expressions.is_empty() {
                             return Ok(function)
                         } else {
-                            return Err(WanderError(format!("Invalid function call.")))
+                            return Err(WanderError(format!("Invalid function call, expected expressions {expressions:?}.")))
                         },
                     }
                 }
@@ -246,7 +252,7 @@ fn handle_function_call<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
                                 Err(err) => return Err(err),
                             }
                         },
-                        _ => return Err(WanderError(format!("Invalid function call.")))
+                        _ => return Err(WanderError(format!("Invalid function call, was expecting a lambda and found {value}.")))
                     },
                     Err(err) => return Err(err),
                 }
@@ -270,10 +276,34 @@ fn value_to_expression<T: Clone + Display + PartialEq + Eq>(value: WanderValue<T
         WanderValue::String(value) => Expression::String(value),
         WanderValue::Nothing => Expression::Nothing,
         WanderValue::Lambda(p, i, o, b) => Expression::Lambda(p, i, o, b),
-        WanderValue::List(value) => todo!(),
-        WanderValue::Tuple(value) => todo!(),
-        WanderValue::Set(value) => todo!(),
-        WanderValue::Record(value) => todo!(),
+        WanderValue::List(values) => {
+            let mut expressions = vec![];
+            for value in values {
+                expressions.push(value_to_expression(value).clone());
+            }
+            Expression::List(expressions)
+        },
+        WanderValue::Tuple(values) => {
+            let mut expressions = vec![];
+            for value in values {
+                expressions.push(value_to_expression(value).clone());
+            }
+            Expression::Tuple(expressions)
+        },
+        WanderValue::Set(values) => {
+            let mut expressions = HashSet::new();
+            for value in values {
+                expressions.insert(value_to_expression(value).clone());
+            }
+            Expression::Set(expressions)
+        },
+        WanderValue::Record(value_record) => {
+            let mut record = HashMap::new();
+            for (name, value) in value_record {
+                record.insert(name, value_to_expression(value));
+            }
+            Expression::Record(record)
+        },
         WanderValue::HostValue(value) => todo!(),
     }
 }

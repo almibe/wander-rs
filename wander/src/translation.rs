@@ -9,7 +9,7 @@ use crate::{parser::Element, WanderError, interpreter::Expression, bindings};
 /// Handle any tranlations needed before creating an expression.
 pub fn translate(elements: Vec<Element>) -> Result<Expression, WanderError> {
     let elements = process_forwards(elements)?;
-    if elements.len() > 1 {
+    if elements.len() != 1 {
         Err(WanderError("Invalid script. Only a single top level expression allowed.".to_owned()))
     } else {
         express(elements.first().unwrap())
@@ -64,7 +64,7 @@ pub fn express(element: &Element) -> Result<Expression, WanderError> {
                 result.insert(e.0.clone(), e.1);
             }
             );
-            todo!()
+            Expression::Record(result)
         },
         Element::Nothing => Expression::Nothing,
         Element::Forward => panic!("Should never reach."),

@@ -46,7 +46,7 @@ fn currying_with_lambda() {
     assert_eq!(res, expected);
 }
 
-//#[test]
+#[test]
 fn currying_twice_with_lambda() {
     let input = r#"
         let
@@ -54,12 +54,12 @@ fn currying_twice_with_lambda() {
             val and = and3 true 
             val isTrue = and true
         in
-            and(isTrue(true) isTrue(false))
+            and (isTrue true) (isTrue false)
         end
     "#;
     let res = run(input, &mut common::<NoHostType>()).unwrap();
-    let res = format!("{res}");
-    let res = run(&res, &mut common::<NoHostType>()).unwrap();
+    // let res = format!("{res}");
+    // let res = run(&res, &mut common::<NoHostType>()).unwrap();
     let expected = WanderValue::Boolean(false);
     assert_eq!(res, expected);
 }

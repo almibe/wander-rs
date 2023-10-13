@@ -30,7 +30,7 @@ fn run_wander_string() {
 
 #[test]
 fn run_wander_let_binding() {
-    let input = "val x = true";
+    let input = "let val x = true end";
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Nothing);
     assert_eq!(res, expected);
@@ -46,7 +46,7 @@ fn run_wander_let_binding_and_reference() {
 
 #[test]
 fn run_native_function() {
-    let input = "Bool.not(true)";
+    let input = "Bool.not true";
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Boolean(false));
     assert_eq!(res, expected);
@@ -54,7 +54,7 @@ fn run_native_function() {
 
 #[test]
 fn run_nested_function_calls() {
-    let input = "Bool.not(Bool.not(false))";
+    let input = "Bool.not (Bool.not false)";
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Boolean(false));
     assert_eq!(res, expected);
@@ -70,7 +70,7 @@ fn run_scope() {
 
 #[test]
 fn run_conditional() {
-    let input = "if true then if Bool.not true then 5 else 6 else 7";
+    let input = "if true then if Bool.not true then 5 else 6 end else 7 end";
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Int(6));
     assert_eq!(res, expected);
@@ -90,12 +90,15 @@ fn run_list() {
 
 #[test]
 fn run_tuple() {
-    let input = "'() '(1 '(2) '())";
+    let input = "'('() '(1 '(2) '()))";
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Tuple(vec![
-        WanderValue::Int(1),
-        WanderValue::Tuple(vec![WanderValue::Int(2)]),
         WanderValue::Tuple(vec![]),
+        WanderValue::Tuple(vec![
+            WanderValue::Int(1),
+            WanderValue::Tuple(vec![WanderValue::Int(2)]),
+            WanderValue::Tuple(vec![]),    
+        ]),
     ]));
     assert_eq!(res, expected);
 }
@@ -116,25 +119,25 @@ fn host_function_calls() {
     assert_eq!(res, expected);
 }
 
-// #[test]
-// fn run_lambda_with_host_function_calls() {
-//     let input = r#"
-//     let
-//         val id = \x -> x
-//     in
-//         id [(Bool.not true) (Bool.not false)]
-//     end"#;
-//     let res = run(input, &mut common::<NoHostType>());
-//     let expected = Ok(WanderValue::List(vec![
-//         WanderValue::Boolean(false),
-//         WanderValue::Boolean(true),
-//     ]));
-//     assert_eq!(res, expected);
-// }
-
 #[test]
+fn run_lambda_with_host_function_calls() {
+    let input = r#"
+    let
+        val id = \x -> x
+    in
+        id [(Bool.not true) (Bool.not false)]
+    end"#;
+    let res = run(input, &mut common::<NoHostType>());
+    let expected = Ok(WanderValue::List(vec![
+        WanderValue::Boolean(false),
+        WanderValue::Boolean(true),
+    ]));
+    assert_eq!(res, expected);
+}
+
+//#[test]
 fn forward_operator() {
-    let input = "true >> Bool.not()";
+    let input = "true >> Bool.not";
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Boolean(false));
     assert_eq!(res, expected);

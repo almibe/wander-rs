@@ -2,12 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-mod records_tests;
-
 use wander::lexer::Token;
 use wander::parser::{parse, Element};
-use wander::translation::translate;
 use wander::WanderType;
+
+#[path = "utilities.rs"]
+mod utilities;
 
 #[test]
 fn parse_booleans() {
@@ -59,58 +59,14 @@ fn parse_name() {
     assert_eq!(res, expected);
 }
 
-// #[test]
-// fn parse_empty_scope() {
-//     let input = vec![Token::Let, Token::In, Token::End];
-//     let res = parse(input);
-//     let expected = Ok(vec![Element::FunctionCall(vec![])]);
-//     assert_eq!(res, expected);
-// }
-
-// #[test]
-// fn parse_let_binding() {
-//     let input: Vec<Token> = vec![
-//         Token::Val,
-//         Token::Name(String::from("x")),
-//         Token::EqualSign,
-//         Token::Int(5),
-//     ];
-//     let res = parse(input);
-//     let expected = Ok(vec![Element::Val(String::from("x"), vec![Element::Int(5)])]);
-//     assert_eq!(res, expected)
-// }
-
-// #[test]
-// fn parse_function_call() {
-//     let input = vec![
-//         Token::Name(String::from("test")),
-//         Token::OpenParen,
-//         Token::Boolean(false),
-//         Token::CloseParen,
-//     ];
-//     let res = parse(input);
-//     let expected = Ok(vec![Element::FunctionCall(
-//         String::from("test"),
-//         vec![Element::Boolean(false)],
-//     )]);
-//     assert_eq!(res, expected);
-// }
-
 #[test]
 fn parse_conditional() {
-    let input = vec![
-        Token::If,
-        Token::Boolean(true),
-        Token::Int(5),
-        Token::Else,
-        Token::Int(6),
-    ];
-    let res = parse(input);
-    let expected = Ok(vec![Element::Conditional(
+    let res = utilities::parse_str("if true then 5 else 6 end");
+    let expected = vec![Element::Conditional(
         Box::new(Element::Boolean(true)),
         Box::new(Element::Int(5)),
         Box::new(Element::Int(6)),
-    )]);
+    )];
     assert_eq!(res, expected);
 }
 
@@ -134,58 +90,46 @@ fn parse_lambda() {
 
 #[test]
 fn parse_list() {
-    let input = vec![
-        Token::OpenSquare,
-        Token::Name("test".to_owned()),
-        Token::Int(24601),
-        Token::CloseSquare,
-    ];
-    let res = parse(input);
-    let expected = Ok(vec![Element::List(vec![
+    let res = utilities::parse_str("[test 24601]");
+    let expected = vec![Element::List(vec![
         Element::Name("test".to_owned()),
         Element::Int(24601),
-    ])]);
+    ])];
     assert_eq!(res, expected);
 }
 
 #[test]
 fn parse_tuple() {
-    let input = vec![
-        Token::SingleQuote,
-        Token::OpenParen,
-        Token::Name("test".to_owned()),
-        Token::Int(24601),
-        Token::CloseParen,
-    ];
-    let res = parse(input);
-    let expected = Ok(vec![Element::Tuple(vec![
+    let res = utilities::parse_str("'(test 24601)");
+    let expected = vec![Element::Tuple(vec![
         Element::Name("test".to_owned()),
         Element::Int(24601),
-    ])]);
+    ])];
     assert_eq!(res, expected);
 }
 
-// #[test]
-// fn parse_forward() {
-//     // false >> not()
-//     let input = vec![
-//         Token::Boolean(false),
-//         Token::Forward,
-//         Token::Name("not".to_owned()),
-//         Token::OpenParen,
-//         Token::CloseParen,
-//     ];
-//     let res = parse(input);
-//     let expected = Ok(vec![
-//         Element::Boolean(false),
-//         Element::Forward,
-//         Element::FunctionCall("not".to_owned(), vec![]),
-//     ]);
-//     assert_eq!(res, expected);
-//     let res = translate(res.unwrap());
-//     let expected = Ok(vec![Element::FunctionCall(
-//         "not".to_owned(),
-//         vec![Element::Boolean(false)],
-//     )]);
-//     assert_eq!(res, expected);
-// }
+#[test]
+fn parse_applications() {
+    let res = utilities::parse_str("Bool.not x true");
+    let expected = vec![Element::Application(vec![
+        Element::Name("Bool.not".to_owned()),
+        Element::Name("x".to_owned()),
+        Element::Boolean(true),
+    ])];
+    assert_eq!(res, expected);
+}
+
+#[test]
+fn parse_nested_function_calls() {
+    let res = utilities::parse_str("Bool.not (Bool.not false)");
+    let expected = vec![
+        Element::Application(
+            vec![
+                Element::Name("Bool.not".to_owned()), 
+                Element::Application(
+                    vec![
+                        Element::Name("Bool.not".to_owned()), 
+                        Element::Boolean(false)])])
+    ];
+    assert_eq!(res, expected);
+}

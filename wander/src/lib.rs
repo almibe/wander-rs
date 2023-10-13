@@ -35,6 +35,14 @@ pub mod translation;
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct WanderError(pub String);
 
+/// A combination of all the traits needed to implement a HostType.
+trait HostType: Clone + Eq {}
+impl<T> HostType for T where T: Clone + Eq {}
+
+trait TypeSystem<T: HostType> {
+    fn check(value: WanderValue<T>, type_value: WanderValue<T>) -> Result<bool, WanderError>;
+}
+
 /// This is a dummy type you can use when you don't need a HostType.
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize, Clone)]
 pub struct NoHostType {}
@@ -271,15 +279,15 @@ pub fn run<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
 #[derive(Debug, Serialize)]
 /// Structure used for debugging or inspecting code.
 pub struct Introspection {
-    ///
+    /// A list of all Tokens including whitespace.
     pub tokens_ws: Vec<Token>,
-    ///
+    /// A list of all Tokens without whitespace.
     pub tokens: Vec<Token>,
-    ///
+    /// A list of all Tokens after macro transformations.
     pub tokens_transformed: Vec<Token>,
-    ///
+    /// A list of all Elements.
     pub elements: Vec<Element>,
-    ///
+    /// A list of all Expressions.
     pub expressions: Vec<Expression>,
 }
 
@@ -288,11 +296,11 @@ pub fn introspect<T: Clone + PartialEq + Eq>(
     script: &str,
     bindings: &Bindings<T>,
 ) -> Result<Introspection, WanderError> {
-    let tokens_ws = tokenize(script)?;
-    let tokens = tokenize_and_filter(script)?;
-    let tokens_transformed = transform(&tokens.clone(), bindings)?;
-    let elements = parse(tokens_transformed.clone())?;
-    let expressions = translate_all(elements.clone())?;
+    let tokens_ws = tokenize(script).or(Ok(vec![]))?;
+    let tokens = tokenize_and_filter(script).or(Ok(vec![]))?;
+    let tokens_transformed = transform(&tokens.clone(), bindings).or(Ok(vec![]))?;
+    let elements = parse(tokens_transformed.clone()).or(Ok(vec![]))?;
+    let expressions = translate_all(elements.clone()).or(Ok(vec![]))?;
     Ok(Introspection {
         tokens_ws,
         tokens,
