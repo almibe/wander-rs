@@ -39,14 +39,30 @@ fn process_forwards(element: &Element) -> Result<Element, WanderError> {
     let mut to_move: Vec<Element> = vec![];
     while let Some(element) = elements.get(index) {
         if element == &Element::Forward {
-            to_move.append(&mut results);
+            if to_move.is_empty() {
+                to_move.append(&mut results);
+            } else {
+                if to_move.len() == 1 {
+                    results.push(to_move.pop().unwrap());
+                } else {
+                    let mut g = vec![];
+                    g.append(&mut to_move);
+                    results.push(Element::Grouping(g));    
+                }
+            }
         } else {
             results.push(element.clone());
         }
         index += 1;
     }
     if !to_move.is_empty() {
-        results.append(&mut to_move);
+        if to_move.len() == 1 {
+            results.push(to_move.first().unwrap().clone());
+        } else {
+            let mut g = vec![];
+            g.append(&mut to_move);
+            results.push(Element::Grouping(g));    
+        }
     }
     return Ok(Element::Grouping(results));
 }

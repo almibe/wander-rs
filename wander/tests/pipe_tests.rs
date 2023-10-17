@@ -3,9 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use wander::parser::Element;
+use wander::{run, WanderValue, NoHostType};
 
-use crate::utilities::introspect_str;
+use crate::utilities::{introspect_str, parse_str};
 use wander::interpreter::Expression;
+use wander::translation::translate;
+use wander::preludes::common;
 
 #[path = "utilities.rs"]
 mod utilities;
@@ -26,85 +29,70 @@ fn parse_forward_value_to_name() {
     assert_eq!(res.expression, expected);
 }
 
-// #[test]
-// fn parse_forward_value_to_application() {
-//     let res = parse_str("false >> Bool.and true");
-//     let expected = Element::Grouping(vec![
-//         Element::Boolean(false),
-//         Element::Forward,
-//         Element::Grouping(vec![
-//             Element::Name("Bool.and".to_owned()),
-//             Element::Boolean(true),
-//         ]),
-//     ]);
-//     assert_eq!(res, expected);
-//     let res = translate(&res).unwrap();
-//     let expected = Expression::Application(vec![
-//         Expression::Name("Bool.and".to_owned()),
-//         Expression::Boolean(true),
-//         Expression::Boolean(false)]);
-//     assert_eq!(res, expected);
-// }
+#[test]
+fn parse_forward_value_to_application() {
+    let res = parse_str("false >> Bool.and true");
+    let expected = Element::Grouping(vec![
+        Element::Boolean(false),
+        Element::Forward,
+        Element::Name("Bool.and".to_owned()),
+        Element::Boolean(true),
+    ]);
+    assert_eq!(res, expected);
+    let res = translate(&res).unwrap();
+    let expected = Expression::Application(vec![
+        Expression::Name("Bool.and".to_owned()),
+        Expression::Boolean(true),
+        Expression::Boolean(false)]);
+    assert_eq!(res, expected);
+}
 
-// #[test]
-// fn parse_forward_application_to_application() {
-//     let res = parse_str("Bool.not false >> Bool.and true");
-//     let expected = Element::Grouping(vec![
-//         Element::Name("Bool.not".to_owned()),
-//         Element::Boolean(false),
-//         Element::Forward,
-//         Element::Name("Bool.and".to_owned()),
-//         Element::Boolean(true),
-//     ]);
-//     assert_eq!(res, expected);
-//     let res = translate(&res).unwrap();
-//     let expected = Expression::Application(vec![
-//         Expression::Name("Bool.and".to_owned()),
-//         Expression::Boolean(true),
-//         Expression::Application(vec![
-//             Expression::Name("Bool.not".to_owned()),
-//             Expression::Boolean(false),
-//         ])]);
-//     assert_eq!(res, expected);
-// }
+#[test]
+fn parse_forward_application_to_application() {
+    let res = parse_str("Bool.not false >> Bool.and true");
+    let expected = Element::Grouping(vec![
+        Element::Name("Bool.not".to_owned()),
+        Element::Boolean(false),
+        Element::Forward,
+        Element::Name("Bool.and".to_owned()),
+        Element::Boolean(true),
+    ]);
+    assert_eq!(res, expected);
+    let res = translate(&res).unwrap();
+    let expected = Expression::Application(vec![
+        Expression::Name("Bool.and".to_owned()),
+        Expression::Boolean(true),
+        Expression::Application(vec![
+            Expression::Name("Bool.not".to_owned()),
+            Expression::Boolean(false),
+        ])]);
+    assert_eq!(res, expected);
+}
 
-// #[test]
-// fn run_forward_value_to_name() {
-//     let res = run("false >> not");
-//     let expected = ;
-//     assert_eq!(res, expected);
-// }
+#[test]
+fn run_forward_value_to_name() {
+    let res = run("false >> Bool.not", &mut common::<NoHostType>());
+    let expected = Ok(WanderValue::Boolean(true));
+    assert_eq!(res, expected);
+}
 
-// #[test]
-// fn run_forward_value_to_application() {
-//     let res = parse_str("false >> Bool.and true");
-//     let expected = vec![
-//         Element::Boolean(false),
-//         Element::Forward,
-//         Element::Name("not".to_owned()),
-//     ];
-//     assert_eq!(res, expected);
-//     let res = translate(res).unwrap();
-//     let expected = Expression::Application(vec![
-//         Expression::Name("not".to_owned()),
-//         Expression::Boolean(false)]);
-//     assert_eq!(res, expected);
-// }
+#[test]
+fn run_forward_value_to_application() {
+    let res = run("false >> Bool.and true", &mut common::<NoHostType>());
+    let expected = Ok(WanderValue::Boolean(false));
+    assert_eq!(res, expected);
+}
 
-// #[test]
-// fn run_forward_value_to_application() {
-//     let res = parse_str("Bool.not false >> Bool.and true");
-//     let expected = vec![
-//         Element::Boolean(false),
-//         Element::Forward,
-//         Element::Name("not".to_owned()),
-//     ];
-//     assert_eq!(res, expected);
-//     let res = translate(res).unwrap();
-//     let expected = Expression::Application(vec![
-//         Expression::Name("not".to_owned()),
-//         Expression::Boolean(false)]);
-//     assert_eq!(res, expected);
-// }
+#[test]
+fn run_forward_application_to_application() {
+    let res = run("Bool.not false >> Bool.and true", &mut common::<NoHostType>());
+    let expected = Ok(WanderValue::Boolean(true));
+    assert_eq!(res, expected);
+}
 
-//TODO add tests with multiple pipes in a single expression
+#[test]
+fn run_multiple_forwards() {
+    let res = run("Bool.not false >> Bool.and true >> Bool.not", &mut common::<NoHostType>());
+    let expected = Ok(WanderValue::Boolean(true));
+    assert_eq!(res, expected);
+}
