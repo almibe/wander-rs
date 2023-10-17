@@ -89,12 +89,13 @@ fn parse<T: Clone + Eq>(input: &str, instance: &Bindings<T>) -> bool {
     } else {
         input.replacen(":p", "", 1)
     };
+    let input = input.trim();
     let introspection = introspect(&input, instance).unwrap();
     println!("Tokens:\n{:?}\n", introspection.tokens_ws);
     println!("Tokens Filtered:\n{:?}\n", introspection.tokens);
     println!("Transformed:\n{:?}\n", introspection.tokens_transformed);
-    println!("Elements:\n{:?}\n", introspection.elements);
-    println!("Expressions:\n{:?}\n", introspection.expressions);
+    println!("Elements:\n{:?}\n", introspection.element);
+    println!("Expressions:\n{:?}\n", introspection.expression);
     true
 }
 

@@ -18,7 +18,7 @@ pub enum Element {
     Name(String),
     HostFunction(String),
     Let(Vec<(String, Element)>, Box<Element>),
-    Application(Vec<Element>),
+    Grouping(Vec<Element>),
     Conditional(Box<Element>, Box<Element>, Box<Element>),
     Lambda(String, WanderType, WanderType, Box<Element>),
     Tuple(Vec<Element>),
@@ -55,7 +55,6 @@ fn string(gaze: &mut Gaze<Token>) -> Option<Element> {
         _ => None,
     }
 }
-
 
 fn nothing(gaze: &mut Gaze<Token>) -> Option<Element> {
     match gaze.next() {
@@ -96,23 +95,18 @@ fn let_scope(gaze: &mut Gaze<Token>) -> Option<Element> {
             } else {
                 Element::Nothing
             };
-        
+
             match gaze.next() {
                 Some(Token::End) => Some(Element::Let(decls, Box::new(body))),
                 _ => None,
-            }        
-        },
+            }
+        }
         _ => Some(Element::Let(decls, Box::new(Element::Nothing))),
     }
 }
 
-fn application(gaze: &mut Gaze<Token>) -> Option<Element> {
+fn grouping(gaze: &mut Gaze<Token>) -> Option<Element> {
     let mut expressions: Vec<Element> = vec![];
-
-    match gaze.attemptf(&mut name) {
-        Some(name) => expressions.push(name),
-        _ => return None,
-    }
 
     while let Some(e) = gaze.attemptf(&mut element_inner) {
         expressions.push(e);
@@ -120,8 +114,7 @@ fn application(gaze: &mut Gaze<Token>) -> Option<Element> {
 
     match &expressions[..] {
         [] => None,
-        [e] => Some(e.clone()),
-        _ => Some(Element::Application(expressions)),
+        _ => Some(Element::Grouping(expressions)),
     }
 }
 
@@ -138,7 +131,7 @@ fn grouped_application(gaze: &mut Gaze<Token>) -> Option<Element> {
     }
 
     match gaze.next() {
-        Some(Token::CloseParen) => Some(Element::Application(expressions)),
+        Some(Token::CloseParen) => Some(Element::Grouping(expressions)),
         _ => return None,
     }
 }
@@ -152,7 +145,7 @@ fn conditional(gaze: &mut Gaze<Token>) -> Option<Element> {
         Some(d) => d,
         None => return None,
     };
-    
+
     match gaze.next() {
         Some(Token::Then) => (),
         _ => return None,
@@ -255,7 +248,7 @@ fn record(gaze: &mut Gaze<Token>) -> Option<Element> {
             Some(Token::EqualSign) => (),
             _ => return None,
         };
-        match gaze.attemptf(&mut element) {
+        match gaze.attemptf(&mut element_inner) {
             Some(element) => contents.insert(name, element),
             None => None,
         };
@@ -331,12 +324,12 @@ fn element_inner(gaze: &mut Gaze<Token>) -> Option<Element> {
         set,
         record,
         name,
+        forward,
         boolean,
         nothing,
         int,
         string,
         let_scope,
-        name,
         grouped_application,
         conditional,
         lambda,
@@ -352,20 +345,20 @@ fn element_inner(gaze: &mut Gaze<Token>) -> Option<Element> {
 
 fn element(gaze: &mut Gaze<Token>) -> Option<Element> {
     let mut parsers = vec![
-        tuple,
-        set,
-        record,
-        boolean,
-        nothing,
+        //        tuple,
+        //        set,
+        //        record,
+        //        boolean,
+        //        nothing,
         forward,
-        int,
-        string,
+        //        int,
+        //        string,
         let_scope,
-        application,
+        grouping,
         grouped_application,
         conditional,
-        lambda,
-        list,
+        //        lambda,
+        //        list,
     ];
     for &mut mut parser in parsers.iter_mut() {
         if let Some(element) = gaze.attemptf(&mut parser) {
@@ -388,7 +381,21 @@ fn elements(gaze: &mut Gaze<Token>) -> Option<Vec<Element>> {
 }
 
 /// Parse a sequence of Tokens into an AST.
-pub fn parse(tokens: Vec<Token>) -> Result<Vec<Element>, WanderError> {
+pub fn parse(tokens: Vec<Token>) -> Result<Element, WanderError> {
+    let mut gaze = Gaze::from_vec(tokens);
+    match gaze.attemptf(&mut elements) {
+        Some(value) => match &value[..] {
+            [element] => Ok(element.clone()),
+            _ => Err(WanderError(
+                "Parse only produces a single top level expression.".to_owned(),
+            )),
+        },
+        None => Err(WanderError(format!("Error parsing {:?}", gaze.peek()))),
+    }
+}
+
+/// Parse a sequence of Tokens into a sequence of ASTs.
+pub fn parse_multiple(tokens: Vec<Token>) -> Result<Vec<Element>, WanderError> {
     let mut gaze = Gaze::from_vec(tokens);
     match gaze.attemptf(&mut elements) {
         Some(value) => Ok(value),

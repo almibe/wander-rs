@@ -124,8 +124,15 @@ fn int(lex: &mut Lexer<Token>) -> Option<i64> {
     }
 }
 
+fn trim_string(value: &str) -> &str {
+    let mut chars = value.chars();
+    assert_eq!(chars.next().unwrap(), '"');
+    assert_eq!(chars.next_back().unwrap(), '"');
+    chars.as_str()
+}
+
 fn string(lex: &mut Lexer<Token>) -> Option<String> {
-    Some(lex.slice().to_string())
+    Some(trim_string(lex.slice()).to_string())
 }
 
 fn name(lex: &mut Lexer<Token>) -> Option<String> {

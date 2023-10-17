@@ -97,7 +97,7 @@ fn run_tuple() {
         WanderValue::Tuple(vec![
             WanderValue::Int(1),
             WanderValue::Tuple(vec![WanderValue::Int(2)]),
-            WanderValue::Tuple(vec![]),    
+            WanderValue::Tuple(vec![]),
         ]),
     ]));
     assert_eq!(res, expected);

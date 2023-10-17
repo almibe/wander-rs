@@ -52,7 +52,7 @@ fn tokenize_integers() {
 fn tokenize_strings() {
     let input = "\"Hello, world\"";
     let res = tokenize_and_filter(input);
-    let expected = Ok(vec![Token::String(String::from("\"Hello, world\""))]);
+    let expected = Ok(vec![Token::String(String::from("Hello, world"))]);
     assert_eq!(res, expected);
 }
 
@@ -60,9 +60,7 @@ fn tokenize_strings() {
 fn tokenize_strings_with_quotes() {
     let input = "\"\\\"Hello, world\\\"\"";
     let res = tokenize_and_filter(input);
-    let expected = Ok(vec![Token::String(String::from(
-        "\"\\\"Hello, world\\\"\"",
-    ))]);
+    let expected = Ok(vec![Token::String(String::from("\\\"Hello, world\\\""))]);
     assert_eq!(res, expected);
 }
 

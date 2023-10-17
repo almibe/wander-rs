@@ -8,12 +8,12 @@
 
 use std::{
     collections::{HashMap, HashSet},
-    fmt::{Display, Write, Debug},
+    fmt::{Debug, Display, Write},
 };
 
 use bindings::Bindings;
 use interpreter::{eval, Expression};
-use lexer::{tokenize, transform, Token, tokenize_and_filter};
+use lexer::{tokenize, tokenize_and_filter, transform, Token};
 use parser::{parse, Element};
 use serde::{Deserialize, Serialize};
 use translation::{translate, translate_all};
@@ -36,8 +36,8 @@ pub mod translation;
 pub struct WanderError(pub String);
 
 /// A combination of all the traits needed to implement a HostType.
-trait HostType: Clone + Eq {}
-impl<T> HostType for T where T: Clone + Eq {}
+pub trait HostType: Debug + PartialEq + Eq + Serialize + Clone {}
+impl<T> HostType for T where T: Debug + PartialEq + Eq + Serialize + Clone {}
 
 trait TypeSystem<T: HostType> {
     fn check(value: WanderValue<T>, type_value: WanderValue<T>) -> Result<bool, WanderError>;
@@ -258,7 +258,11 @@ impl<T: Clone + Display + PartialEq + Eq + std::fmt::Debug> Display for WanderVa
                 write_list_or_tuple_wander_value("'(", ')', contents, f)
             }
             WanderValue::Record(values) => write_record(values, f),
-            WanderValue::Lambda(p, i, o, b) => write!(f, "[lambda {:?}]", WanderValue::Lambda::<T>(p.clone(), i.clone(), o.clone() ,b.clone())),
+            WanderValue::Lambda(p, i, o, b) => write!(
+                f,
+                "[lambda {:?}]",
+                WanderValue::Lambda::<T>(p.clone(), i.clone(), o.clone(), b.clone())
+            ),
             WanderValue::Set(contents) => write_set(contents, f),
         }
     }
@@ -271,9 +275,9 @@ pub fn run<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
 ) -> Result<WanderValue<T>, WanderError> {
     let tokens = tokenize_and_filter(script)?;
     let tokens = transform(&tokens, bindings)?;
-    let elements = parse(tokens)?;
-    let expressions = translate(elements)?;
-    eval(&expressions, bindings)
+    let element = parse(tokens)?;
+    let expression = translate(&element)?;
+    eval(&expression, bindings)
 }
 
 #[derive(Debug, Serialize)]
@@ -286,9 +290,9 @@ pub struct Introspection {
     /// A list of all Tokens after macro transformations.
     pub tokens_transformed: Vec<Token>,
     /// A list of all Elements.
-    pub elements: Vec<Element>,
+    pub element: Element,
     /// A list of all Expressions.
-    pub expressions: Vec<Expression>,
+    pub expression: Expression,
 }
 
 /// Run a Wander script with the given Bindings.
@@ -299,13 +303,13 @@ pub fn introspect<T: Clone + PartialEq + Eq>(
     let tokens_ws = tokenize(script).or(Ok(vec![]))?;
     let tokens = tokenize_and_filter(script).or(Ok(vec![]))?;
     let tokens_transformed = transform(&tokens.clone(), bindings).or(Ok(vec![]))?;
-    let elements = parse(tokens_transformed.clone()).or(Ok(vec![]))?;
-    let expressions = translate_all(elements.clone()).or(Ok(vec![]))?;
+    let element = parse(tokens_transformed.clone()).or(Ok(Element::String("Error".to_owned())))?; //TODO handle errors better
+    let expression = translate(&element).or(Ok(Expression::String("Error".to_owned())))?; //TODO handle errors better
     Ok(Introspection {
         tokens_ws,
         tokens,
         tokens_transformed,
-        elements,
-        expressions,
+        element,
+        expression,
     })
 }

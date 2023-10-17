@@ -4,8 +4,12 @@
 
 use wander::parser::Element;
 use wander::preludes::common;
-use wander::{introspect, NoHostType};
+use wander::{introspect, Introspection, NoHostType};
 
-pub fn parse_str(input: &str) -> Vec<Element> {
-    introspect(input, &common::<NoHostType>()).unwrap().elements
+pub fn parse_str(input: &str) -> Element {
+    introspect(input, &common::<NoHostType>()).unwrap().element
+}
+
+pub fn introspect_str(input: &str) -> Introspection {
+    introspect(input, &common::<NoHostType>()).unwrap()
 }

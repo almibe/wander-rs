@@ -5,7 +5,7 @@
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::bindings::Bindings;
 
@@ -66,36 +66,32 @@ fn unescape_string(value: String) -> String {
     let mut last_char = ' ';
     let mut idx = 0;
     value.chars().for_each(|c| {
-        if idx == 0 || idx == value.chars().count() - 1 {
-            idx += 1;
-        } else {
-            idx += 1;
-            if last_char == '\\' {
-                match c {
-                    'n' => {
-                        result.push('\n');
-                        last_char = c
-                    }
-                    '\\' => {
-                        result.push('\\');
-                        last_char = ' '
-                    }
-                    't' => {
-                        result.push('\t');
-                        last_char = c
-                    }
-                    '"' => {
-                        result.push(c);
-                        last_char = c
-                    }
-                    _ => todo!(),
+        idx += 1;
+        if last_char == '\\' {
+            match c {
+                'n' => {
+                    result.push('\n');
+                    last_char = c
                 }
-            } else if c == '\\' {
-                last_char = c
-            } else {
-                result.push(c);
-                last_char = c
+                '\\' => {
+                    result.push('\\');
+                    last_char = ' '
+                }
+                't' => {
+                    result.push('\t');
+                    last_char = c
+                }
+                '"' => {
+                    result.push(c);
+                    last_char = c
+                }
+                _ => todo!(),
             }
+        } else if c == '\\' {
+            last_char = c
+        } else {
+            result.push(c);
+            last_char = c
         }
     });
     if last_char == '\\' {
@@ -104,7 +100,10 @@ fn unescape_string(value: String) -> String {
     result
 }
 
-fn handle_host_function<T: Clone + Display + PartialEq + Eq>(name: &str, bindings: &mut Bindings<T>) -> Result<WanderValue<T>, WanderError> {
+fn handle_host_function<T: Clone + Display + PartialEq + Eq>(
+    name: &str,
+    bindings: &mut Bindings<T>,
+) -> Result<WanderValue<T>, WanderError> {
     let host_function = bindings.read_host_function(&name.to_owned()).unwrap();
     let params = host_function.binding().parameters;
     let mut arguments = vec![];
@@ -209,7 +208,7 @@ fn handle_function_call<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
     if expressions.len() == 1 {
         match expressions.first().unwrap() {
             Expression::Application(body) => panic!("Should never reach, {body:?}!"),
-            expression => return eval(expression, bindings)
+            expression => return eval(expression, bindings),
         }
     }
     let mut expressions = expressions.clone();
@@ -219,49 +218,53 @@ fn handle_function_call<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
         match expression {
             Expression::Lambda(name, input, output, lambda_body) => {
                 if expressions.is_empty() {
-                    return Ok(WanderValue::Lambda(name, input, output, lambda_body))
+                    return Ok(WanderValue::Lambda(name, input, output, lambda_body));
                 } else {
                     let argument_expression = expressions.pop().unwrap();
                     let argument_value = eval(&argument_expression, bindings)?;
                     bindings.bind(name, argument_value);
                     let function = eval(&express(&lambda_body)?, bindings)?;
                     match function {
-                        WanderValue::Lambda(_, _, _, b) => {
-                            match eval(&express(&b)?, bindings) {
-                                Ok(value) => expressions.push(value_to_expression(value)),
-                                Err(err) => return Err(err),
-                            }                            
+                        WanderValue::Lambda(_, _, _, b) => match eval(&express(&b)?, bindings) {
+                            Ok(value) => expressions.push(value_to_expression(value)),
+                            Err(err) => return Err(err),
                         },
-                        _ => if expressions.is_empty() {
-                            return Ok(function)
-                        } else {
-                            return Err(WanderError(format!("Invalid function call, expected expressions {expressions:?}.")))
-                        },
+                        _ => {
+                            if expressions.is_empty() {
+                                return Ok(function);
+                            } else {
+                                return Err(WanderError(format!(
+                                    "Invalid function call, expected expressions {expressions:?}."
+                                )));
+                            }
+                        }
                     }
                 }
-            },
-            Expression::Name(name) => {
-                match eval(&Expression::Name(name), bindings) {
-                    Ok(value) => match value {
-                        WanderValue::Lambda(p, i, o, b) => {
-                            let argument_expression = expressions.pop().unwrap();
-                            let argument_value = eval(&argument_expression, bindings)?;
-                            bindings.bind(p, argument_value);        
-                            match eval(&express(&b)?, bindings) {
-                                Ok(value) => expressions.push(value_to_expression(value)),
-                                Err(err) => return Err(err),
-                            }
-                        },
-                        _ => return Err(WanderError(format!("Invalid function call, was expecting a lambda and found {value}.")))
-                    },
-                    Err(err) => return Err(err),
-                }
+            }
+            Expression::Name(name) => match eval(&Expression::Name(name), bindings) {
+                Ok(value) => match value {
+                    WanderValue::Lambda(p, i, o, b) => {
+                        let argument_expression = expressions.pop().unwrap();
+                        let argument_value = eval(&argument_expression, bindings)?;
+                        bindings.bind(p, argument_value);
+                        match eval(&express(&b)?, bindings) {
+                            Ok(value) => expressions.push(value_to_expression(value)),
+                            Err(err) => return Err(err),
+                        }
+                    }
+                    _ => {
+                        return Err(WanderError(format!(
+                            "Invalid function call, was expecting a lambda and found {value}."
+                        )))
+                    }
+                },
+                Err(err) => return Err(err),
             },
             value => {
                 if expressions.is_empty() {
-                    return eval(&value, bindings)
+                    return eval(&value, bindings);
                 } else {
-                    return Err(WanderError(format!("Invalid function call {value:?}.")))
+                    return Err(WanderError(format!("Invalid function call {value:?}.")));
                 }
             }
         };
@@ -282,28 +285,28 @@ fn value_to_expression<T: Clone + Display + PartialEq + Eq>(value: WanderValue<T
                 expressions.push(value_to_expression(value).clone());
             }
             Expression::List(expressions)
-        },
+        }
         WanderValue::Tuple(values) => {
             let mut expressions = vec![];
             for value in values {
                 expressions.push(value_to_expression(value).clone());
             }
             Expression::Tuple(expressions)
-        },
+        }
         WanderValue::Set(values) => {
             let mut expressions = HashSet::new();
             for value in values {
                 expressions.insert(value_to_expression(value).clone());
             }
             Expression::Set(expressions)
-        },
+        }
         WanderValue::Record(value_record) => {
             let mut record = HashMap::new();
             for (name, value) in value_record {
                 record.insert(name, value_to_expression(value));
             }
             Expression::Record(record)
-        },
+        }
         WanderValue::HostValue(value) => todo!(),
     }
 }
@@ -313,7 +316,6 @@ fn handle_let<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
     body: Expression,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
-
     for (name, body) in decls {
         handle_decl(name, body, bindings)?;
     }
@@ -328,8 +330,8 @@ fn handle_decl<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
     match eval(&body, bindings) {
         Ok(value) => {
             bindings.bind(name.to_string(), value);
-            Ok(())        
-        },
+            Ok(())
+        }
         Err(err) => return Err(err),
     }
 }

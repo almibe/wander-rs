@@ -16,8 +16,8 @@ fn eval_boolean_true() {
 
 #[test]
 fn eval_string_with_quotes() {
-    let input = Expression::String("\"\\\"\"".to_owned());
+    let input = Expression::String(r#"\""#.to_owned());
     let res = eval(&input, &mut common::<NoHostType>());
-    let expected = Ok(WanderValue::String("\"".to_owned()));
+    let expected = Ok(WanderValue::String(r#"""#.to_owned()));
     assert_eq!(res, expected);
 }
