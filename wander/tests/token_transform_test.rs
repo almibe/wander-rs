@@ -55,7 +55,7 @@ fn token_transformer_no_input_test() {
 
 #[test]
 fn token_transformer_none() {
-    let input = "None.none`this (will) >>  [be ] {ignored}} `";
+    let input = "None.none`this (will) |  [be ] {ignored}} `";
     let mut bindings = common::<NoHostType>();
     bindings.bind_token_transformer(
         "None".to_owned(),

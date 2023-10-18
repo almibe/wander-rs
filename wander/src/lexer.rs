@@ -79,8 +79,8 @@ pub enum Token {
     #[token("]")]
     CloseSquare,
 
-    #[token(">>")]
-    Forward,
+    #[token("|")]
+    Pipe,
 
     #[token("->")]
     Arrow,

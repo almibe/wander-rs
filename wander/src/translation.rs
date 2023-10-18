@@ -8,11 +8,11 @@ use crate::{interpreter::Expression, parser::Element, WanderError};
 
 // Handle any tranlations needed before creating an expression.
 pub fn translate(element: Element) -> Result<Expression, WanderError> {
-    let element = process_forwards(&element)?;
+    let element = process_pipes(&element)?;
     express(&element)
 }
 
-fn process_forwards(element: &Element) -> Result<Element, WanderError> {
+fn process_pipes(element: &Element) -> Result<Element, WanderError> {
     let elements = match element {
         Element::Grouping(elements) => elements,
         e => return Ok(e.clone()),
@@ -20,7 +20,7 @@ fn process_forwards(element: &Element) -> Result<Element, WanderError> {
     let mut index = 0;
     let mut results: Vec<Element> = vec![];
     while let Some(element) = elements.get(index) {
-        if element == &Element::Forward {
+        if element == &Element::Pipe {
             index += 1;
             match elements.get(index) {
                 Some(Element::Grouping(next_elements)) => {
@@ -83,7 +83,7 @@ pub fn express(element: &Element) -> Result<Expression, WanderError> {
             Expression::Record(result)
         }
         Element::Nothing => Expression::Nothing,
-        Element::Forward => {
+        Element::Pipe => {
             return Err(WanderError(
                 "Cannot process pipe, Should never reach.".to_owned(),
             ))

@@ -14,11 +14,11 @@ use wander::translation::translate;
 mod utilities;
 
 #[test]
-fn parse_forward_value_to_name() {
-    let res = introspect_str("false >> not");
+fn parse_pipe_value_to_name() {
+    let res = introspect_str("false | not");
     let expected = Element::Grouping(vec![
         Element::Grouping(vec![Element::Boolean(false)]),
-        Element::Forward,
+        Element::Pipe,
         Element::Grouping(vec![Element::Name("not".to_owned())]),
     ]);
     assert_eq!(res.element, expected);
@@ -30,11 +30,11 @@ fn parse_forward_value_to_name() {
 }
 
 #[test]
-fn parse_forward_value_to_application() {
-    let res = parse_str("false >> Bool.and true");
+fn parse_pipe_value_to_application() {
+    let res = parse_str("false | Bool.and true");
     let expected = Element::Grouping(vec![
         Element::Grouping(vec![Element::Boolean(false)]),
-        Element::Forward,
+        Element::Pipe,
         Element::Grouping(vec![
             Element::Name("Bool.and".to_owned()),
             Element::Boolean(true),
@@ -51,14 +51,14 @@ fn parse_forward_value_to_application() {
 }
 
 #[test]
-fn parse_forward_application_to_application() {
-    let res = parse_str("Bool.not false >> Bool.and true");
+fn parse_pipe_application_to_application() {
+    let res = parse_str("Bool.not false | Bool.and true");
     let expected = Element::Grouping(vec![
         Element::Grouping(vec![
             Element::Name("Bool.not".to_owned()),
             Element::Boolean(false),
         ]),
-        Element::Forward,
+        Element::Pipe,
         Element::Grouping(vec![
             Element::Name("Bool.and".to_owned()),
             Element::Boolean(true),
@@ -78,23 +78,23 @@ fn parse_forward_application_to_application() {
 }
 
 #[test]
-fn run_forward_value_to_name() {
-    let res = run("false >> Bool.not", &mut common::<NoHostType>());
+fn run_pipe_value_to_name() {
+    let res = run("false | Bool.not", &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Boolean(true));
     assert_eq!(res, expected);
 }
 
 #[test]
-fn run_forward_value_to_application() {
-    let res = run("false >> Bool.and true", &mut common::<NoHostType>());
+fn run_pipe_value_to_application() {
+    let res = run("false | Bool.and true", &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Boolean(false));
     assert_eq!(res, expected);
 }
 
 #[test]
-fn run_forward_application_to_application() {
+fn run_pipe_application_to_application() {
     let res = run(
-        "Bool.not false >> Bool.and true",
+        "Bool.not false | Bool.and true",
         &mut common::<NoHostType>(),
     );
     let expected = Ok(WanderValue::Boolean(true));
@@ -102,9 +102,9 @@ fn run_forward_application_to_application() {
 }
 
 #[test]
-fn run_multiple_forwards() {
+fn run_multiple_pipes() {
     let res = run(
-        "Bool.not false >> Bool.and true >> Bool.not",
+        "Bool.not false | Bool.and true | Bool.not",
         &mut common::<NoHostType>(),
     );
     let expected = Ok(WanderValue::Boolean(false));

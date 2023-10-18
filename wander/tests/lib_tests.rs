@@ -135,9 +135,9 @@ fn run_lambda_with_host_function_calls() {
     assert_eq!(res, expected);
 }
 
-//#[test]
-fn forward_operator() {
-    let input = "true >> Bool.not";
+#[test]
+fn pipe_operator() {
+    let input = "true | Bool.not";
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Boolean(false));
     assert_eq!(res, expected);

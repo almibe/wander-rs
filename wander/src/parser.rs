@@ -26,7 +26,7 @@ pub enum Element {
     Set(HashSet<Element>),
     Record(HashMap<String, Element>),
     Nothing,
-    Forward,
+    Pipe,
 }
 
 impl core::hash::Hash for Element {
@@ -63,9 +63,9 @@ fn nothing(gaze: &mut Gaze<Token>) -> Option<Element> {
     }
 }
 
-fn forward(gaze: &mut Gaze<Token>) -> Option<Element> {
+fn pipe(gaze: &mut Gaze<Token>) -> Option<Element> {
     match gaze.next() {
-        Some(Token::Forward) => Some(Element::Forward),
+        Some(Token::Pipe) => Some(Element::Pipe),
         _ => None,
     }
 }
@@ -343,13 +343,7 @@ fn element_inner(gaze: &mut Gaze<Token>) -> Option<Element> {
 }
 
 fn element(gaze: &mut Gaze<Token>) -> Option<Element> {
-    let mut parsers = vec![
-        forward,
-        let_scope,
-        grouping,
-        grouped_application,
-        conditional,
-    ];
+    let mut parsers = vec![pipe, let_scope, grouping, grouped_application, conditional];
     for &mut mut parser in parsers.iter_mut() {
         if let Some(element) = gaze.attemptf(&mut parser) {
             return Some(element);

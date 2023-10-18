@@ -99,12 +99,12 @@ fn tokenize_function_call() {
 }
 
 #[test]
-fn tokenize_function_call_with_forward() {
-    let input = "false >> not()";
+fn tokenize_function_call_with_pipe() {
+    let input = "false | not()";
     let res = tokenize_and_filter(input);
     let expected = Ok(vec![
         Token::Boolean(false),
-        Token::Forward,
+        Token::Pipe,
         Token::Name(String::from("not")),
         Token::OpenParen,
         Token::CloseParen,
