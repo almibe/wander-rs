@@ -7,7 +7,10 @@ use wander::preludes::common;
 use wander::{introspect, Introspection, NoHostType};
 
 pub fn parse_str(input: &str) -> Element {
-    introspect(input, &common::<NoHostType>()).unwrap().element
+    introspect(input, &common::<NoHostType>())
+        .unwrap()
+        .element
+        .clone()
 }
 
 pub fn introspect_str(input: &str) -> Introspection {

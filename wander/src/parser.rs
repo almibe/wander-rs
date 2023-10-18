@@ -324,7 +324,6 @@ fn element_inner(gaze: &mut Gaze<Token>) -> Option<Element> {
         set,
         record,
         name,
-        forward,
         boolean,
         nothing,
         int,
@@ -345,20 +344,11 @@ fn element_inner(gaze: &mut Gaze<Token>) -> Option<Element> {
 
 fn element(gaze: &mut Gaze<Token>) -> Option<Element> {
     let mut parsers = vec![
-        //        tuple,
-        //        set,
-        //        record,
-        //        boolean,
-        //        nothing,
         forward,
-        //        int,
-        //        string,
         let_scope,
         grouping,
         grouped_application,
         conditional,
-        //        lambda,
-        //        list,
     ];
     for &mut mut parser in parsers.iter_mut() {
         if let Some(element) = gaze.attemptf(&mut parser) {
@@ -380,25 +370,17 @@ fn elements(gaze: &mut Gaze<Token>) -> Option<Vec<Element>> {
     Some(results)
 }
 
-/// Parse a sequence of Tokens into an AST.
+/// Parse a sequence of Tokens into a sequence of ASTs.
 pub fn parse(tokens: Vec<Token>) -> Result<Element, WanderError> {
     let mut gaze = Gaze::from_vec(tokens);
     match gaze.attemptf(&mut elements) {
-        Some(value) => match &value[..] {
-            [element] => Ok(element.clone()),
-            _ => Err(WanderError(
-                "Parse only produces a single top level expression.".to_owned(),
-            )),
-        },
-        None => Err(WanderError(format!("Error parsing {:?}", gaze.peek()))),
-    }
-}
-
-/// Parse a sequence of Tokens into a sequence of ASTs.
-pub fn parse_multiple(tokens: Vec<Token>) -> Result<Vec<Element>, WanderError> {
-    let mut gaze = Gaze::from_vec(tokens);
-    match gaze.attemptf(&mut elements) {
-        Some(value) => Ok(value),
+        Some(values) => {
+            if values.len() == 1 {
+                Ok(values.first().unwrap().clone())
+            } else {
+                Ok(Element::Grouping(values.to_vec()))
+            }
+        }
         None => Err(WanderError(format!("Error parsing {:?}", gaze.peek()))),
     }
 }

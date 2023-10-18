@@ -94,8 +94,8 @@ fn parse<T: Clone + Eq>(input: &str, instance: &Bindings<T>) -> bool {
     println!("Tokens:\n{:?}\n", introspection.tokens_ws);
     println!("Tokens Filtered:\n{:?}\n", introspection.tokens);
     println!("Transformed:\n{:?}\n", introspection.tokens_transformed);
-    println!("Elements:\n{:?}\n", introspection.element);
-    println!("Expressions:\n{:?}\n", introspection.expression);
+    println!("Element:\n{:?}\n", introspection.element);
+    println!("Expression:\n{:?}\n", introspection.expression);
     true
 }
 

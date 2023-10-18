@@ -6,30 +6,33 @@ use std::collections::HashMap;
 
 use crate::{interpreter::Expression, parser::Element, WanderError};
 
-/// Handle any tranlations needed before creating an expression.
-pub fn translate(element: &Element) -> Result<Expression, WanderError> {
-    let res = process_forwards(element)?;
-    express(&res)
+// Handle any tranlations needed before creating an expression.
+pub fn translate(element: Element) -> Result<Expression, WanderError> {
+    let element = process_forwards(&element)?;
+    express(&element)
 }
 
-/// Handle any tranlations needed before creating expressions.
-pub fn translate_all(elements: Vec<Element>) -> Result<Vec<Expression>, WanderError> {
-    let elements = process_all_forwards(elements)?;
-    express_all(elements)
-}
+// /// Handle any tranlations needed before creating expressions.
+// pub fn translate_all(elements: Vec<Element>) -> Result<Vec<Expression>, WanderError> {
+//     let element = process_forwards(&Element::Grouping(elements))?;
+//     express(element)
+// }
 
-fn process_all_forwards(elements: Vec<Element>) -> Result<Vec<Element>, WanderError> {
-    let mut res = vec![];
-    for element in elements {
-        match element {
-            Element::Grouping(_) => res.push(process_forwards(&element)?),
-            e => res.push(e),
-        }
-    }
-    Ok(res)
-}
+// fn process_all_forwards(elements: Vec<Element>) -> Result<Vec<Element>, WanderError> {
+//     println!("start of process_all_forwards {elements:?}");
+//     let mut res = vec![];
+//     for element in elements {
+//         match element {
+//             Element::Grouping(_) => res.push(process_forwards(&element)?),
+//             Element::Forward => res.insert(index, element),
+//             e => res.push(e),
+//         }
+//     }
+//     Ok(res)
+// }
 
 fn process_forwards(element: &Element) -> Result<Element, WanderError> {
+    println!("start of process_forwards, {element:?}");
     let elements = match element {
         Element::Grouping(elements) => elements,
         e => return Ok(e.clone()),
@@ -47,7 +50,7 @@ fn process_forwards(element: &Element) -> Result<Element, WanderError> {
                 } else {
                     let mut g = vec![];
                     g.append(&mut to_move);
-                    results.push(Element::Grouping(g));    
+                    results.push(Element::Grouping(g));
                 }
             }
         } else {
@@ -61,7 +64,7 @@ fn process_forwards(element: &Element) -> Result<Element, WanderError> {
         } else {
             let mut g = vec![];
             g.append(&mut to_move);
-            results.push(Element::Grouping(g));    
+            results.push(Element::Grouping(g));
         }
     }
     return Ok(Element::Grouping(results));
@@ -121,16 +124,31 @@ pub fn express(element: &Element) -> Result<Expression, WanderError> {
 }
 
 fn handle_grouping(elements: &Vec<Element>) -> Result<Expression, WanderError> {
-    Ok(Expression::Application(
-        elements
-            .clone()
-            .iter()
-            .map(|e| express(e).unwrap())
-            .collect(),
-    ))
-}
-
-fn express_all(elements: Vec<Element>) -> Result<Vec<Expression>, WanderError> {
-    let elements = elements.iter().map(|e| express(e).unwrap()).collect();
-    Ok(elements)
+    println!("in handle_grouping {elements:?}");
+    let expressions: Vec<Expression> = elements
+        .clone()
+        .iter()
+        .map(|e| express(e).unwrap())
+        .collect();
+    let expressions: Vec<Expression> = expressions
+        .iter()
+        .map(|e| match e {
+            Expression::Application(application) => {
+                if application.len() == 1 {
+                    application.first().unwrap().clone()
+                } else {
+                    e.clone()
+                }
+            }
+            e => e.clone(),
+        })
+        .collect();
+    if expressions.len() == 1 {
+        println!("ret 1 - {:?}", expressions.first().unwrap().clone());
+        Ok(expressions.first().unwrap().clone())
+    } else {
+        let res = Expression::Application(expressions);
+        println!("ret 2 - {res:?}");
+        Ok(res)
+    }
 }

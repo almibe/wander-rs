@@ -16,7 +16,7 @@ use interpreter::{eval, Expression};
 use lexer::{tokenize, tokenize_and_filter, transform, Token};
 use parser::{parse, Element};
 use serde::{Deserialize, Serialize};
-use translation::{translate, translate_all};
+use translation::translate;
 
 #[doc(hidden)]
 pub mod bindings;
@@ -36,8 +36,8 @@ pub mod translation;
 pub struct WanderError(pub String);
 
 /// A combination of all the traits needed to implement a HostType.
-pub trait HostType: Debug + PartialEq + Eq + Serialize + Clone {}
-impl<T> HostType for T where T: Debug + PartialEq + Eq + Serialize + Clone {}
+pub trait HostType: Debug + PartialEq + Eq + Serialize + Clone + Display + Serialize {}
+impl<T> HostType for T where T: Debug + PartialEq + Eq + Serialize + Clone + Display + Serialize {}
 
 trait TypeSystem<T: HostType> {
     fn check(value: WanderValue<T>, type_value: WanderValue<T>) -> Result<bool, WanderError>;
@@ -269,14 +269,14 @@ impl<T: Clone + Display + PartialEq + Eq + std::fmt::Debug> Display for WanderVa
 }
 
 /// Run a Wander script with the given Bindings.
-pub fn run<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+pub fn run<T: HostType + Display>(
     script: &str,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     let tokens = tokenize_and_filter(script)?;
     let tokens = transform(&tokens, bindings)?;
-    let element = parse(tokens)?;
-    let expression = translate(&element)?;
+    let elements = parse(tokens)?;
+    let expression = translate(elements)?;
     eval(&expression, bindings)
 }
 
@@ -289,9 +289,9 @@ pub struct Introspection {
     pub tokens: Vec<Token>,
     /// A list of all Tokens after macro transformations.
     pub tokens_transformed: Vec<Token>,
-    /// A list of all Elements.
+    /// Element representation.
     pub element: Element,
-    /// A list of all Expressions.
+    /// Expression representation.
     pub expression: Expression,
 }
 
@@ -303,8 +303,8 @@ pub fn introspect<T: Clone + PartialEq + Eq>(
     let tokens_ws = tokenize(script).or(Ok(vec![]))?;
     let tokens = tokenize_and_filter(script).or(Ok(vec![]))?;
     let tokens_transformed = transform(&tokens.clone(), bindings).or(Ok(vec![]))?;
-    let element = parse(tokens_transformed.clone()).or(Ok(Element::String("Error".to_owned())))?; //TODO handle errors better
-    let expression = translate(&element).or(Ok(Expression::String("Error".to_owned())))?; //TODO handle errors better
+    let element = parse(tokens_transformed.clone())?; //.or(Ok(Element::String("Error".to_owned())))?; //TODO handle errors better
+    let expression = translate(element.clone())?; //.or(Ok(Expression::String("Error".to_owned())))?; //TODO handle errors better
     Ok(Introspection {
         tokens_ws,
         tokens,

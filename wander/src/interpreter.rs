@@ -11,7 +11,7 @@ use crate::bindings::Bindings;
 
 use crate::parser::Element;
 use crate::translation::express;
-use crate::{WanderError, WanderType, WanderValue};
+use crate::{HostType, WanderError, WanderType, WanderValue};
 
 #[doc(hidden)]
 #[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
@@ -38,7 +38,7 @@ impl core::hash::Hash for Expression {
     }
 }
 
-pub fn eval<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+pub fn eval<T: Clone + Display + PartialEq + Eq + std::fmt::Debug + Serialize>(
     expression: &Expression,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -116,7 +116,7 @@ fn handle_host_function<T: Clone + Display + PartialEq + Eq>(
     host_function.run(&arguments, bindings)
 }
 
-fn handle_set<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+fn handle_set<T: HostType + Display>(
     expressions: &HashSet<Expression>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -130,7 +130,7 @@ fn handle_set<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
     Ok(WanderValue::Set(results))
 }
 
-fn handle_tuple<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+fn handle_tuple<T: HostType>(
     expressions: &Vec<Expression>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -144,7 +144,7 @@ fn handle_tuple<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
     Ok(WanderValue::Tuple(results))
 }
 
-fn handle_record<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+fn handle_record<T: HostType>(
     expressions: &HashMap<String, Expression>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -158,7 +158,7 @@ fn handle_record<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
     Ok(WanderValue::Record(results))
 }
 
-fn handle_list<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+fn handle_list<T: HostType>(
     expressions: &Vec<Expression>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -186,7 +186,7 @@ fn handle_lambda<T: Clone + PartialEq + Eq>(
     ))
 }
 
-fn handle_conditional<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+fn handle_conditional<T: HostType + Display>(
     cond: &Expression,
     ife: &Expression,
     elsee: &Expression,
@@ -201,7 +201,61 @@ fn handle_conditional<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
     }
 }
 
-fn handle_function_call<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+fn run_lambda<T: HostType + Display>(
+    name: String,
+    input: WanderType,
+    output: WanderType,
+    lambda_body: Element,
+    expressions: &mut Vec<Expression>,
+    bindings: &mut Bindings<T>,
+) -> Option<Result<WanderValue<T>, WanderError>> {
+    if expressions.is_empty() {
+        return Some(Ok(WanderValue::Lambda(
+            name,
+            input,
+            output,
+            Box::new(lambda_body),
+        )));
+    } else {
+        let argument_expression = expressions.pop().unwrap();
+        let argument_value = match eval(&argument_expression, bindings) {
+            Err(e) => return Some(Err(e)),
+            Ok(e) => e,
+        };
+        bindings.bind(name, argument_value);
+        let expression = match express(&lambda_body) {
+            Ok(e) => e,
+            Err(e) => return Some(Err(e)),
+        };
+        let function = match eval(&expression, bindings) {
+            Ok(e) => e,
+            Err(err) => return Some(Err(err)),
+        };
+        match function {
+            WanderValue::Lambda(_, _, _, b) => {
+                let Ok(expression) = express(&b) else { return None };
+                match eval(&expression, bindings) {
+                    Ok(value) => {
+                        expressions.push(value_to_expression(value));
+                        None
+                    }
+                    Err(err) => return Some(Err(err)),
+                }
+            }
+            _ => {
+                if expressions.is_empty() {
+                    return Some(Ok(function));
+                } else {
+                    return Some(Err(WanderError(format!(
+                        "Invalid function call, expected expressions {expressions:?}."
+                    ))));
+                }
+            }
+        }
+    }
+}
+
+fn handle_function_call<T: Clone + Display + PartialEq + Eq + std::fmt::Debug + Serialize>(
     expressions: &Vec<Expression>,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -216,29 +270,26 @@ fn handle_function_call<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
     while !expressions.is_empty() {
         let expression = expressions.pop().unwrap();
         match expression {
-            Expression::Lambda(name, input, output, lambda_body) => {
-                if expressions.is_empty() {
-                    return Ok(WanderValue::Lambda(name, input, output, lambda_body));
-                } else {
-                    let argument_expression = expressions.pop().unwrap();
-                    let argument_value = eval(&argument_expression, bindings)?;
-                    bindings.bind(name, argument_value);
-                    let function = eval(&express(&lambda_body)?, bindings)?;
-                    match function {
-                        WanderValue::Lambda(_, _, _, b) => match eval(&express(&b)?, bindings) {
-                            Ok(value) => expressions.push(value_to_expression(value)),
-                            Err(err) => return Err(err),
-                        },
-                        _ => {
-                            if expressions.is_empty() {
-                                return Ok(function);
-                            } else {
-                                return Err(WanderError(format!(
-                                    "Invalid function call, expected expressions {expressions:?}."
-                                )));
-                            }
-                        }
+            Expression::Application(contents) => match handle_function_call(&contents, bindings)? {
+                WanderValue::Lambda(name, input, output, element) => {
+                    match run_lambda(name, input, output, *element, &mut expressions, bindings) {
+                        Some(res) => return res,
+                        None => (),
                     }
+                }
+                e => return Ok(e),
+            },
+            Expression::Lambda(name, input, output, lambda_body) => {
+                match run_lambda(
+                    name,
+                    input,
+                    output,
+                    *lambda_body,
+                    &mut expressions,
+                    bindings,
+                ) {
+                    Some(res) => return res,
+                    None => (),
                 }
             }
             Expression::Name(name) => match eval(&Expression::Name(name), bindings) {
@@ -311,7 +362,7 @@ fn value_to_expression<T: Clone + Display + PartialEq + Eq>(value: WanderValue<T
     }
 }
 
-fn handle_let<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+fn handle_let<T: HostType + Display>(
     decls: Vec<(String, Expression)>,
     body: Expression,
     bindings: &mut Bindings<T>,
@@ -322,7 +373,7 @@ fn handle_let<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
     eval(&body, bindings)
 }
 
-fn handle_decl<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+fn handle_decl<T: HostType + Display>(
     name: String,
     body: Expression,
     bindings: &mut Bindings<T>,
@@ -381,7 +432,7 @@ fn read_field<T: Clone + PartialEq + Display + Eq + std::fmt::Debug>(
     }
 }
 
-fn call_function<T: Clone + Display + PartialEq + Eq + std::fmt::Debug>(
+fn call_function<T: HostType + Display>(
     name: &String,
     arguments: &Vec<Expression>,
     bindings: &mut Bindings<T>,
