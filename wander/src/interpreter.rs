@@ -261,7 +261,6 @@ fn handle_function_call<T: Clone + Display + PartialEq + Eq + std::fmt::Debug + 
 ) -> Result<WanderValue<T>, WanderError> {
     if expressions.len() == 1 {
         match expressions.first().unwrap() {
-            Expression::Application(body) => panic!("Should never reach, {body:?}!"),
             expression => return eval(expression, bindings),
         }
     }

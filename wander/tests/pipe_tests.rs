@@ -43,10 +43,8 @@ fn parse_forward_value_to_application() {
     assert_eq!(res, expected);
     let res = translate(res).unwrap();
     let expected = Expression::Application(vec![
-        Expression::Application(vec![
-            Expression::Name("Bool.and".to_owned()),
-            Expression::Boolean(true),
-        ]),
+        Expression::Name("Bool.and".to_owned()),
+        Expression::Boolean(true),
         Expression::Boolean(false),
     ]);
     assert_eq!(res, expected);
@@ -69,10 +67,8 @@ fn parse_forward_application_to_application() {
     assert_eq!(res, expected);
     let res = translate(res).unwrap();
     let expected = Expression::Application(vec![
-        Expression::Application(vec![
-            Expression::Name("Bool.and".to_owned()),
-            Expression::Boolean(true),
-        ]),
+        Expression::Name("Bool.and".to_owned()),
+        Expression::Boolean(true),
         Expression::Application(vec![
             Expression::Name("Bool.not".to_owned()),
             Expression::Boolean(false),
@@ -111,6 +107,6 @@ fn run_multiple_forwards() {
         "Bool.not false >> Bool.and true >> Bool.not",
         &mut common::<NoHostType>(),
     );
-    let expected = Ok(WanderValue::Boolean(true));
+    let expected = Ok(WanderValue::Boolean(false));
     assert_eq!(res, expected);
 }

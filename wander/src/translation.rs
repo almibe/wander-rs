@@ -12,62 +12,32 @@ pub fn translate(element: Element) -> Result<Expression, WanderError> {
     express(&element)
 }
 
-// /// Handle any tranlations needed before creating expressions.
-// pub fn translate_all(elements: Vec<Element>) -> Result<Vec<Expression>, WanderError> {
-//     let element = process_forwards(&Element::Grouping(elements))?;
-//     express(element)
-// }
-
-// fn process_all_forwards(elements: Vec<Element>) -> Result<Vec<Element>, WanderError> {
-//     println!("start of process_all_forwards {elements:?}");
-//     let mut res = vec![];
-//     for element in elements {
-//         match element {
-//             Element::Grouping(_) => res.push(process_forwards(&element)?),
-//             Element::Forward => res.insert(index, element),
-//             e => res.push(e),
-//         }
-//     }
-//     Ok(res)
-// }
-
 fn process_forwards(element: &Element) -> Result<Element, WanderError> {
-    println!("start of process_forwards, {element:?}");
     let elements = match element {
         Element::Grouping(elements) => elements,
         e => return Ok(e.clone()),
     };
     let mut index = 0;
     let mut results: Vec<Element> = vec![];
-    let mut to_move: Vec<Element> = vec![];
     while let Some(element) = elements.get(index) {
         if element == &Element::Forward {
-            if to_move.is_empty() {
-                to_move.append(&mut results);
-            } else {
-                if to_move.len() == 1 {
-                    results.push(to_move.pop().unwrap());
-                } else {
-                    let mut g = vec![];
-                    g.append(&mut to_move);
-                    results.push(Element::Grouping(g));
+            index += 1;
+            match elements.get(index) {
+                Some(Element::Grouping(next_elements)) => {
+                    let mut next_elements = next_elements.clone();
+                    let mut new_results = vec![];
+                    next_elements.append(&mut results);
+                    new_results.push(Element::Grouping(next_elements.clone()));
+                    results = new_results;
                 }
+                _ => return Err(WanderError("Invalid pipe.".to_owned())),
             }
         } else {
             results.push(element.clone());
         }
         index += 1;
     }
-    if !to_move.is_empty() {
-        if to_move.len() == 1 {
-            results.push(to_move.first().unwrap().clone());
-        } else {
-            let mut g = vec![];
-            g.append(&mut to_move);
-            results.push(Element::Grouping(g));
-        }
-    }
-    return Ok(Element::Grouping(results));
+    Ok(Element::Grouping(results))
 }
 
 pub fn express(element: &Element) -> Result<Expression, WanderError> {
@@ -124,7 +94,6 @@ pub fn express(element: &Element) -> Result<Expression, WanderError> {
 }
 
 fn handle_grouping(elements: &Vec<Element>) -> Result<Expression, WanderError> {
-    println!("in handle_grouping {elements:?}");
     let expressions: Vec<Expression> = elements
         .clone()
         .iter()
@@ -144,11 +113,9 @@ fn handle_grouping(elements: &Vec<Element>) -> Result<Expression, WanderError> {
         })
         .collect();
     if expressions.len() == 1 {
-        println!("ret 1 - {:?}", expressions.first().unwrap().clone());
         Ok(expressions.first().unwrap().clone())
     } else {
         let res = Expression::Application(expressions);
-        println!("ret 2 - {res:?}");
         Ok(res)
     }
 }
