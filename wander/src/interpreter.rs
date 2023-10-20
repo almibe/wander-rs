@@ -217,12 +217,12 @@ fn run_lambda<T: HostType + Display>(
     environment: &mut Environment<T>,
 ) -> Option<Result<WanderValue<T>, WanderError>> {
     if expressions.is_empty() {
-        return Some(Ok(WanderValue::Lambda(
+        Some(Ok(WanderValue::Lambda(
             name,
             input,
             output,
             Box::new(lambda_body),
-        )));
+        )))
     } else {
         let argument_expression = expressions.pop().unwrap();
         let argument_value = match eval(&argument_expression, environment) {
@@ -246,47 +246,48 @@ fn run_lambda<T: HostType + Display>(
                         expressions.push(value_to_expression(value));
                         None
                     }
-                    Err(err) => return Some(Err(err)),
+                    Err(err) => Some(Err(err)),
                 }
             }
             _ => {
                 if expressions.is_empty() {
-                    return Some(Ok(function));
+                    Some(Ok(function))
                 } else {
-                    return Some(Err(WanderError(format!(
+                    Some(Err(WanderError(format!(
                         "Invalid function call, expected expressions {expressions:?}."
-                    ))));
+                    ))))
                 }
             }
         }
     }
 }
 
-fn handle_function_call<T: Clone + Display + PartialEq + Eq + std::fmt::Debug + Serialize>(
+fn handle_function_call<T: HostType>(
     expressions: &Vec<Expression>,
     environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     if expressions.len() == 1 {
-        match expressions.first().unwrap() {
-            expression => return eval(expression, environment),
-        }
+        let expression = expressions.first().unwrap();
+        return eval(expression, environment);
     }
     let mut expressions = expressions.clone();
     expressions.reverse();
-    while !expressions.is_empty() {
-        let expression = expressions.pop().unwrap();
+    while let Some(expression) = expressions.pop() {
         match expression {
-            Expression::Application(contents) => match handle_function_call(&contents, environment)? {
-                WanderValue::Lambda(name, input, output, element) => {
-                    match run_lambda(name, input, output, *element, &mut expressions, environment) {
-                        Some(res) => return res,
-                        None => (),
+            Expression::Application(contents) => {
+                match handle_function_call(&contents, environment)? {
+                    WanderValue::Lambda(name, input, output, element) => {
+                        if let Some(res) =
+                            run_lambda(name, input, output, *element, &mut expressions, environment)
+                        {
+                            return res;
+                        }
                     }
+                    e => return Ok(e),
                 }
-                e => return Ok(e),
-            },
+            }
             Expression::Lambda(name, input, output, lambda_body) => {
-                match run_lambda(
+                if let Some(res) = run_lambda(
                     name,
                     input,
                     output,
@@ -294,8 +295,7 @@ fn handle_function_call<T: Clone + Display + PartialEq + Eq + std::fmt::Debug + 
                     &mut expressions,
                     environment,
                 ) {
-                    Some(res) => return res,
-                    None => (),
+                    return res;
                 }
             }
             Expression::Name(name) => match eval(&Expression::Name(name), environment) {
@@ -391,7 +391,7 @@ fn handle_decl<T: HostType + Display>(
             environment.bind(name.to_string(), value);
             Ok(())
         }
-        Err(err) => return Err(err),
+        Err(err) => Err(err),
     }
 }
 
@@ -411,7 +411,7 @@ fn read_name<T: HostType>(
 
 fn read_tagged_name<T: HostType>(
     name: &String,
-    tag: &Box<Expression>,
+    tag: &Expression,
     environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     if let Some(value) = environment.read(name) {

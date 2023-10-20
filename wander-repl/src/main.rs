@@ -15,7 +15,7 @@ use wander::environment::Environment;
 use wander::preludes::common;
 use wander::{introspect, run, HostFunctionBinding, HostType, NoHostType};
 
-struct REPLState<T: Clone + PartialEq + Eq> {
+struct REPLState<T: HostType> {
     bindings: Environment<T>,
 }
 

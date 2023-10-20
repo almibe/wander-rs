@@ -3,7 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::{
-    parser::Element, HostFunction, HostFunctionBinding, HostType, TokenTransformer, WanderValue, TypeChecker, EpsilonChecker,
+    parser::Element, EpsilonChecker, HostFunction, HostFunctionBinding, HostType, TokenTransformer,
+    TypeChecker, WanderValue,
 };
 use std::{
     cell::RefCell,
@@ -16,7 +17,7 @@ pub struct Environment<T: HostType> {
     token_transformers: RefCell<HashMap<String, Rc<TokenTransformer>>>,
     host_functions: RefCell<HashMap<String, Rc<dyn HostFunction<T>>>>,
     scopes: Vec<HashMap<String, WanderValue<T>>>,
-    type_checker: Box<dyn TypeChecker<T>>
+    type_checker: Box<dyn TypeChecker<T>>,
 }
 
 ///
@@ -31,7 +32,7 @@ impl<T: HostType> Environment<T> {
             token_transformers: RefCell::new(HashMap::new()),
             host_functions: RefCell::new(HashMap::new()),
             scopes: vec![HashMap::new()],
-            type_checker: Box::new(EpsilonChecker {})
+            type_checker: Box::new(EpsilonChecker {}),
         }
     }
 

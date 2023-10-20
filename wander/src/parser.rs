@@ -72,7 +72,7 @@ fn pipe(gaze: &mut Gaze<Token>) -> Option<Element> {
 fn name(gaze: &mut Gaze<Token>) -> Option<Element> {
     match gaze.next() {
         Some(Token::Name(value)) => Some(Element::Name(value)),
-        _ => return None,
+        _ => None,
     }
 }
 
@@ -131,7 +131,7 @@ fn grouped_application(gaze: &mut Gaze<Token>) -> Option<Element> {
 
     match gaze.next() {
         Some(Token::CloseParen) => Some(Element::Grouping(expressions)),
-        _ => return None,
+        _ => None,
     }
 }
 
