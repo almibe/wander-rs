@@ -209,7 +209,7 @@ fn lambda(gaze: &mut Gaze<Token>) -> Option<Element> {
                 Some(prev_lambda) => {
                     final_lambda = Some(Element::Lambda(
                         name.clone(),
-                        None,
+                        tag,
                         None,
                         Box::new(prev_lambda),
                     ))
@@ -217,7 +217,7 @@ fn lambda(gaze: &mut Gaze<Token>) -> Option<Element> {
                 None => {
                     final_lambda = Some(Element::Lambda(
                         name.clone(),
-                        None,
+                        tag,
                         None,
                         Box::new(body.clone()),
                     ))

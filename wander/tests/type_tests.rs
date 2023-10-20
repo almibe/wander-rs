@@ -34,7 +34,7 @@ fn parse_tagged_name_in_let() {
 
 #[test]
 fn parse_tagged_name_in_lambda() {
-    let res = introspect_str("let val x = \\y: Any = y end");
+    let res = introspect_str("let val x = \\y: Any -> y end");
     let expected = Element::Let(
         vec![(
             "x".to_owned(),
@@ -43,7 +43,7 @@ fn parse_tagged_name_in_lambda() {
                 "y".to_owned(),
                 Some("Any".to_owned()),
                 None,
-                Box::new(Element::Name("y".to_owned())),
+                Box::new(Element::Grouping(vec![Element::Name("y".to_owned())])),
             )]),
         )],
         Box::new(Element::Nothing),
@@ -52,8 +52,13 @@ fn parse_tagged_name_in_lambda() {
     let expected = Expression::Let(
         vec![(
             "x".to_owned(),
-            Some(Expression::Name("Int".to_owned())),
-            Expression::Int(5),
+            None,
+            Expression::Lambda(
+                "y".to_owned(),
+                Some("Any".to_owned()),
+                None,
+                Box::new(Element::Grouping(vec![Element::Name("y".to_owned())])),
+            ),
         )],
         Box::new(Expression::Nothing),
     );
