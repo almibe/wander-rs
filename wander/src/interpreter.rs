@@ -7,7 +7,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::bindings::Bindings;
+use crate::environment::Environment;
 
 use crate::parser::Element;
 use crate::translation::express;
@@ -44,27 +44,27 @@ impl core::hash::Hash for Expression {
 
 pub fn eval<T: Clone + Display + PartialEq + Eq + std::fmt::Debug + Serialize>(
     expression: &Expression,
-    bindings: &mut Bindings<T>,
+    environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     match expression {
         Expression::Boolean(value) => Ok(WanderValue::Boolean(*value)),
         Expression::Int(value) => Ok(WanderValue::Int(*value)),
         Expression::String(value) => Ok(WanderValue::String(unescape_string(value.to_string()))),
-        Expression::Let(decls, body) => handle_let(decls.clone(), *body.clone(), bindings),
-        Expression::Name(name) => read_name(name, bindings),
-        Expression::TaggedName(name, tag) => read_tagged_name(name, tag, bindings),
-        Expression::Application(expressions) => handle_function_call(expressions, bindings),
-        Expression::Conditional(c, i, e) => handle_conditional(c, i, e, bindings),
-        Expression::List(values) => handle_list(values, bindings),
+        Expression::Let(decls, body) => handle_let(decls.clone(), *body.clone(), environment),
+        Expression::Name(name) => read_name(name, environment),
+        Expression::TaggedName(name, tag) => read_tagged_name(name, tag, environment),
+        Expression::Application(expressions) => handle_function_call(expressions, environment),
+        Expression::Conditional(c, i, e) => handle_conditional(c, i, e, environment),
+        Expression::List(values) => handle_list(values, environment),
         Expression::Nothing => Ok(WanderValue::Nothing),
-        Expression::Tuple(values) => handle_tuple(values, bindings),
-        Expression::Record(values) => handle_record(values, bindings),
+        Expression::Tuple(values) => handle_tuple(values, environment),
+        Expression::Record(values) => handle_record(values, environment),
         Expression::Lambda(name, input, output, body) => {
             handle_lambda(name.clone(), input.clone(), output.clone(), body)
         }
-        Expression::Set(values) => handle_set(values, bindings),
-        Expression::HostFunction(name) => handle_host_function(name, bindings),
-        // Expression::Grouping(expressions) => handle_grouping(expressions.clone(), bindings),
+        Expression::Set(values) => handle_set(values, environment),
+        Expression::HostFunction(name) => handle_host_function(name, environment),
+        // Expression::Grouping(expressions) => handle_grouping(expressions.clone(), environment),
     }
 }
 
@@ -109,27 +109,27 @@ fn unescape_string(value: String) -> String {
 
 fn handle_host_function<T: HostType>(
     name: &str,
-    bindings: &mut Bindings<T>,
+    environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
-    let host_function = bindings.read_host_function(&name.to_owned()).unwrap();
+    let host_function = environment.read_host_function(&name.to_owned()).unwrap();
     let params = host_function.binding().parameters;
     let mut arguments = vec![];
     for (name, wander_type) in params {
-        match bindings.read(&name) {
+        match environment.read(&name) {
             Some(value) => arguments.push(value),
             None => return Err(WanderError(format!("Could not read {}", name))),
         }
     }
-    host_function.run(&arguments, bindings)
+    host_function.run(&arguments, environment)
 }
 
 fn handle_set<T: HostType + Display>(
     expressions: &HashSet<Expression>,
-    bindings: &mut Bindings<T>,
+    environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     let mut results = HashSet::new();
     for expression in expressions {
-        match eval(expression, bindings) {
+        match eval(expression, environment) {
             Ok(value) => results.insert(value),
             Err(err) => return Err(err),
         };
@@ -139,11 +139,11 @@ fn handle_set<T: HostType + Display>(
 
 fn handle_tuple<T: HostType>(
     expressions: &Vec<Expression>,
-    bindings: &mut Bindings<T>,
+    environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     let mut results = vec![];
     for expression in expressions {
-        match eval(expression, bindings) {
+        match eval(expression, environment) {
             Ok(value) => results.push(value),
             Err(err) => return Err(err),
         }
@@ -153,11 +153,11 @@ fn handle_tuple<T: HostType>(
 
 fn handle_record<T: HostType>(
     expressions: &HashMap<String, Expression>,
-    bindings: &mut Bindings<T>,
+    environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     let mut results = HashMap::new();
     for (name, expression) in expressions {
-        match eval(expression, bindings) {
+        match eval(expression, environment) {
             Ok(value) => results.insert(name.to_owned(), value),
             Err(err) => return Err(err),
         };
@@ -167,11 +167,11 @@ fn handle_record<T: HostType>(
 
 fn handle_list<T: HostType>(
     expressions: &Vec<Expression>,
-    bindings: &mut Bindings<T>,
+    environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     let mut results = vec![];
     for expression in expressions {
-        match eval(expression, bindings) {
+        match eval(expression, environment) {
             Ok(value) => results.push(value),
             Err(err) => return Err(err),
         }
@@ -197,11 +197,11 @@ fn handle_conditional<T: HostType + Display>(
     cond: &Expression,
     ife: &Expression,
     elsee: &Expression,
-    bindings: &mut Bindings<T>,
+    environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
-    match eval(cond, bindings)? {
-        WanderValue::Boolean(true) => eval(ife, bindings),
-        WanderValue::Boolean(false) => eval(elsee, bindings),
+    match eval(cond, environment)? {
+        WanderValue::Boolean(true) => eval(ife, environment),
+        WanderValue::Boolean(false) => eval(elsee, environment),
         value => Err(WanderError(format!(
             "Conditionals require a bool value found, {value}"
         ))),
@@ -214,7 +214,7 @@ fn run_lambda<T: HostType + Display>(
     output: Option<String>,
     lambda_body: Element,
     expressions: &mut Vec<Expression>,
-    bindings: &mut Bindings<T>,
+    environment: &mut Environment<T>,
 ) -> Option<Result<WanderValue<T>, WanderError>> {
     if expressions.is_empty() {
         return Some(Ok(WanderValue::Lambda(
@@ -225,23 +225,23 @@ fn run_lambda<T: HostType + Display>(
         )));
     } else {
         let argument_expression = expressions.pop().unwrap();
-        let argument_value = match eval(&argument_expression, bindings) {
+        let argument_value = match eval(&argument_expression, environment) {
             Err(e) => return Some(Err(e)),
             Ok(e) => e,
         };
-        bindings.bind(name, argument_value);
+        environment.bind(name, argument_value);
         let expression = match express(&lambda_body) {
             Ok(e) => e,
             Err(e) => return Some(Err(e)),
         };
-        let function = match eval(&expression, bindings) {
+        let function = match eval(&expression, environment) {
             Ok(e) => e,
             Err(err) => return Some(Err(err)),
         };
         match function {
             WanderValue::Lambda(_, _, _, b) => {
                 let Ok(expression) = express(&b) else { return None };
-                match eval(&expression, bindings) {
+                match eval(&expression, environment) {
                     Ok(value) => {
                         expressions.push(value_to_expression(value));
                         None
@@ -264,11 +264,11 @@ fn run_lambda<T: HostType + Display>(
 
 fn handle_function_call<T: Clone + Display + PartialEq + Eq + std::fmt::Debug + Serialize>(
     expressions: &Vec<Expression>,
-    bindings: &mut Bindings<T>,
+    environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     if expressions.len() == 1 {
         match expressions.first().unwrap() {
-            expression => return eval(expression, bindings),
+            expression => return eval(expression, environment),
         }
     }
     let mut expressions = expressions.clone();
@@ -276,9 +276,9 @@ fn handle_function_call<T: Clone + Display + PartialEq + Eq + std::fmt::Debug + 
     while !expressions.is_empty() {
         let expression = expressions.pop().unwrap();
         match expression {
-            Expression::Application(contents) => match handle_function_call(&contents, bindings)? {
+            Expression::Application(contents) => match handle_function_call(&contents, environment)? {
                 WanderValue::Lambda(name, input, output, element) => {
-                    match run_lambda(name, input, output, *element, &mut expressions, bindings) {
+                    match run_lambda(name, input, output, *element, &mut expressions, environment) {
                         Some(res) => return res,
                         None => (),
                     }
@@ -292,19 +292,19 @@ fn handle_function_call<T: Clone + Display + PartialEq + Eq + std::fmt::Debug + 
                     output,
                     *lambda_body,
                     &mut expressions,
-                    bindings,
+                    environment,
                 ) {
                     Some(res) => return res,
                     None => (),
                 }
             }
-            Expression::Name(name) => match eval(&Expression::Name(name), bindings) {
+            Expression::Name(name) => match eval(&Expression::Name(name), environment) {
                 Ok(value) => match value {
                     WanderValue::Lambda(p, i, o, b) => {
                         let argument_expression = expressions.pop().unwrap();
-                        let argument_value = eval(&argument_expression, bindings)?;
-                        bindings.bind(p, argument_value);
-                        match eval(&express(&b)?, bindings) {
+                        let argument_value = eval(&argument_expression, environment)?;
+                        environment.bind(p, argument_value);
+                        match eval(&express(&b)?, environment) {
                             Ok(value) => expressions.push(value_to_expression(value)),
                             Err(err) => return Err(err),
                         }
@@ -319,7 +319,7 @@ fn handle_function_call<T: Clone + Display + PartialEq + Eq + std::fmt::Debug + 
             },
             value => {
                 if expressions.is_empty() {
-                    return eval(&value, bindings);
+                    return eval(&value, environment);
                 } else {
                     return Err(WanderError(format!("Invalid function call {value:?}.")));
                 }
@@ -371,24 +371,24 @@ fn value_to_expression<T: Clone + Display + PartialEq + Eq>(value: WanderValue<T
 fn handle_let<T: HostType + Display>(
     decls: Vec<(String, Option<Expression>, Expression)>,
     body: Expression,
-    bindings: &mut Bindings<T>,
+    environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     for (name, tag, body) in decls {
-        handle_decl(name, tag, body, bindings)?;
+        handle_decl(name, tag, body, environment)?;
     }
-    eval(&body, bindings)
+    eval(&body, environment)
 }
 
 fn handle_decl<T: HostType + Display>(
     name: String,
     tag: Option<Expression>,
     body: Expression,
-    bindings: &mut Bindings<T>,
+    environment: &mut Environment<T>,
 ) -> Result<(), WanderError> {
     //TODO handle tag checking here
-    match eval(&body, bindings) {
+    match eval(&body, environment) {
         Ok(value) => {
-            bindings.bind(name.to_string(), value);
+            environment.bind(name.to_string(), value);
             Ok(())
         }
         Err(err) => return Err(err),
@@ -397,14 +397,14 @@ fn handle_decl<T: HostType + Display>(
 
 fn read_name<T: HostType>(
     name: &String,
-    bindings: &mut Bindings<T>,
+    environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
-    if let Some(value) = bindings.read(name) {
+    if let Some(value) = environment.read(name) {
         Ok(value)
     } else {
-        match bindings.read_host_function(name) {
+        match environment.read_host_function(name) {
             Some(_) => todo!(), //Ok(WanderValue::HostedFunction(name.to_owned())),
-            None => read_field(name, bindings),
+            None => read_field(name, environment),
         }
     }
 }
@@ -412,21 +412,21 @@ fn read_name<T: HostType>(
 fn read_tagged_name<T: HostType>(
     name: &String,
     tag: &Box<Expression>,
-    bindings: &mut Bindings<T>,
+    environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
-    if let Some(value) = bindings.read(name) {
+    if let Some(value) = environment.read(name) {
         Ok(value)
     } else {
-        match bindings.read_host_function(name) {
+        match environment.read_host_function(name) {
             Some(_) => todo!(), //Ok(WanderValue::HostedFunction(name.to_owned())),
-            None => read_field(name, bindings),
+            None => read_field(name, environment),
         }
     }
 }
 
 fn read_field<T: HostType>(
     name: &str,
-    bindings: &mut Bindings<T>,
+    environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     let t = name
         .split('.')
@@ -434,7 +434,7 @@ fn read_field<T: HostType>(
         .collect::<Vec<String>>();
     let mut result = None;
     let (name, fields) = t.split_first().unwrap();
-    if let Some(WanderValue::Record(value)) = bindings.read(&name.to_string()) {
+    if let Some(WanderValue::Record(value)) = environment.read(&name.to_string()) {
         for field in fields {
             match result {
                 Some(WanderValue::Record(r)) => result = Some(r.get(field).unwrap().clone()),
@@ -458,23 +458,23 @@ fn read_field<T: HostType>(
 fn call_function<T: HostType + Display>(
     name: &String,
     arguments: &Vec<Expression>,
-    bindings: &mut Bindings<T>,
+    environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     let mut argument_values = vec![];
     for argument in arguments {
-        match eval(argument, bindings) {
+        match eval(argument, environment) {
             Ok(value) => argument_values.push(value),
             Err(err) => return Err(err),
         }
     }
-    match bindings.read(name) {
+    match environment.read(name) {
         //found other value (err), will evntually handle lambdas here
         Some(_) => Err(WanderError(format!("Function {} is not defined.", &name))),
-        None => match bindings.read_host_function(name) {
+        None => match environment.read_host_function(name) {
             None => Err(WanderError(format!("Function {} is not defined.", name))),
             Some(function) => {
                 if argument_values.len() == function.binding().parameters.len() {
-                    function.run(&argument_values, bindings)
+                    function.run(&argument_values, environment)
                 } else {
                     // Ok(WanderValue::PartialApplication(Box::new(
                     //     PartialApplication {

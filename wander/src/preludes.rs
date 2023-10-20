@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::{
-    bindings::Bindings, HostFunction, HostFunctionBinding, HostType, WanderError, WanderValue,
+    environment::Environment, HostFunction, HostFunctionBinding, HostType, WanderError, WanderValue,
 };
 use std::rc::Rc;
 
@@ -12,7 +12,7 @@ impl<T: HostType> HostFunction<T> for EqFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
-        _bindings: &Bindings<T>,
+        _bindings: &Environment<T>,
     ) -> Result<WanderValue<T>, WanderError> {
         if let [left, right] = arguments {
             Ok(crate::WanderValue::Boolean(left == right))
@@ -38,7 +38,7 @@ impl<T: HostType> HostFunction<T> for AssertEqFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
-        _bindings: &Bindings<T>,
+        _bindings: &Environment<T>,
     ) -> Result<WanderValue<T>, WanderError> {
         if let [left, right] = arguments {
             if left == right {
@@ -68,7 +68,7 @@ impl<T: HostType> HostFunction<T> for AndFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
-        _bindings: &Bindings<T>,
+        _bindings: &Environment<T>,
     ) -> Result<crate::WanderValue<T>, WanderError> {
         if let [WanderValue::Boolean(left), WanderValue::Boolean(right)] = arguments[..] {
             Ok(crate::WanderValue::Boolean(left && right))
@@ -97,7 +97,7 @@ impl<T: HostType> HostFunction<T> for NotFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
-        _bindings: &Bindings<T>,
+        _bindings: &Environment<T>,
     ) -> Result<crate::WanderValue<T>, WanderError> {
         if let [WanderValue::Boolean(value)] = arguments[..] {
             Ok(crate::WanderValue::Boolean(!value))
@@ -123,7 +123,7 @@ impl<T: HostType> HostFunction<T> for AtFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
-        _: &Bindings<T>,
+        _: &Environment<T>,
     ) -> Result<WanderValue<T>, WanderError> {
         if let [WanderValue::Int(index), WanderValue::List(value)] = arguments {
             let index: usize = index.to_owned().try_into().unwrap();
@@ -212,8 +212,8 @@ impl<T: HostType> HostFunction<T> for AtFunction {
 
 /// Creates a set of Bindings for Wander that consists of all of the common
 /// functionality, but doesn't interact with an instance of Ligature.
-pub fn common<T: HostType>() -> Bindings<T> {
-    let mut bindings = Bindings::new();
+pub fn common<T: HostType>() -> Environment<T> {
+    let mut bindings = Environment::new();
     bindings.bind_host_function(Rc::new(EqFunction {}));
 
     bindings.bind_host_function(Rc::new(AssertEqFunction {}));

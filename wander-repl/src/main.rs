@@ -11,12 +11,12 @@ use tabled::{
     settings::{object::Rows, Modify, Width},
     Table, Tabled,
 };
-use wander::bindings::Bindings;
+use wander::environment::Environment;
 use wander::preludes::common;
 use wander::{introspect, run, HostFunctionBinding, HostType, NoHostType};
 
 struct REPLState<T: Clone + PartialEq + Eq> {
-    bindings: Bindings<T>,
+    bindings: Environment<T>,
 }
 
 fn main() -> Result<()> {
@@ -83,7 +83,7 @@ fn handle_command<T: HostType>(input: &str, instance: &mut REPLState<T>) -> bool
     }
 }
 
-fn parse<T: HostType>(input: &str, instance: &Bindings<T>) -> bool {
+fn parse<T: HostType>(input: &str, instance: &Environment<T>) -> bool {
     let input = if input.starts_with(":parse") {
         input.replacen(":parse", "", 1)
     } else {
@@ -103,7 +103,7 @@ fn broadcast(_input: &str) -> bool {
     true
 }
 
-fn bindings<T: HostType>(bindings: &Bindings<T>) -> bool {
+fn bindings<T: HostType>(bindings: &Environment<T>) -> bool {
     bindings
         .bound_names()
         .iter()
@@ -111,7 +111,7 @@ fn bindings<T: HostType>(bindings: &Bindings<T>) -> bool {
     true
 }
 
-fn environment<T: HostType>(bindings: &mut Bindings<T>) -> bool {
+fn environment<T: HostType>(bindings: &mut Environment<T>) -> bool {
     let mut display: Vec<EnvironmentDisplay> = bindings
         .environment()
         .into_iter()

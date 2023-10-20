@@ -14,7 +14,7 @@ impl HostFunction<String> for SayHello {
     fn run(
         &self,
         _arguments: &[WanderValue<String>],
-        _bindings: &wander::bindings::Bindings<String>,
+        _bindings: &wander::environment::Environment<String>,
     ) -> Result<WanderValue<String>, WanderError> {
         Ok(WanderValue::HostValue(HostValue {
             value: "hello!".to_owned(),

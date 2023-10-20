@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::{
-    parser::Element, HostFunction, HostFunctionBinding, HostType, TokenTransformer, WanderValue,
+    parser::Element, HostFunction, HostFunctionBinding, HostType, TokenTransformer, WanderValue, TypeChecker, EpsilonChecker,
 };
 use std::{
     cell::RefCell,
@@ -12,11 +12,11 @@ use std::{
 };
 
 /// A structure used to setup the environment a Wander program is executed in.
-#[derive(Default)]
-pub struct Bindings<T: Clone + PartialEq + Eq> {
+pub struct Environment<T: HostType> {
     token_transformers: RefCell<HashMap<String, Rc<TokenTransformer>>>,
     host_functions: RefCell<HashMap<String, Rc<dyn HostFunction<T>>>>,
     scopes: Vec<HashMap<String, WanderValue<T>>>,
+    type_checker: Box<dyn TypeChecker<T>>
 }
 
 ///
@@ -24,13 +24,14 @@ pub struct Bindings<T: Clone + PartialEq + Eq> {
 //     fn add_bindings(&self, bindings: &mut Bindings<T>);
 // }
 
-impl<T: HostType> Bindings<T> {
+impl<T: HostType> Environment<T> {
     /// Create a new empty Bindings.
-    pub fn new() -> Bindings<T> {
-        Bindings {
+    pub fn new() -> Environment<T> {
+        Environment {
             token_transformers: RefCell::new(HashMap::new()),
             host_functions: RefCell::new(HashMap::new()),
             scopes: vec![HashMap::new()],
+            type_checker: Box::new(EpsilonChecker {})
         }
     }
 

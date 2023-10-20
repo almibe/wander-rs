@@ -11,7 +11,7 @@ use std::{
     fmt::{Debug, Display, Write},
 };
 
-use bindings::Bindings;
+use environment::Environment;
 use interpreter::{eval, Expression};
 use lexer::{tokenize, tokenize_and_filter, transform, Token};
 use parser::{parse, Element};
@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 use translation::translate;
 
 #[doc(hidden)]
-pub mod bindings;
+pub mod environment;
 #[doc(hidden)]
 pub mod interpreter;
 #[doc(hidden)]
@@ -42,14 +42,14 @@ impl<T> HostType for T where T: Debug + PartialEq + Eq + Serialize + Clone + Dis
 /// A trait for the pluggable type checker used by Wander.
 pub trait TypeChecker<T: HostType> {
     /// Called when a value is assigned to a TaggedNamed.
-    fn check(value: WanderValue<T>, tag: WanderValue<T>) -> Result<bool, WanderError>;
+    fn check(self: &Self, value: WanderValue<T>, tag: WanderValue<T>) -> Result<bool, WanderError>;
 }
 
 /// A TypeChecker that does nothing, everything passes.
 pub struct EpsilonChecker {}
 
 impl<T: HostType> TypeChecker<T> for EpsilonChecker {
-    fn check(value: WanderValue<T>, tag: WanderValue<T>) -> Result<bool, WanderError> {
+    fn check(self: &Self, value: WanderValue<T>, tag: WanderValue<T>) -> Result<bool, WanderError> {
         Ok(true)
     }
 }
@@ -84,7 +84,7 @@ pub trait HostFunction<T: HostType> {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
-        bindings: &Bindings<T>,
+        bindings: &Environment<T>,
     ) -> Result<WanderValue<T>, WanderError>;
     /// Get the binding information for this HostFunction.
     fn binding(&self) -> HostFunctionBinding;
@@ -259,7 +259,7 @@ impl<T: Clone + Display + PartialEq + Eq + std::fmt::Debug> Display for WanderVa
 /// Run a Wander script with the given Bindings.
 pub fn run<T: HostType + Display>(
     script: &str,
-    bindings: &mut Bindings<T>,
+    bindings: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     let tokens = tokenize_and_filter(script)?;
     let tokens = transform(&tokens, bindings)?;
@@ -286,7 +286,7 @@ pub struct Introspection {
 /// Run a Wander script with the given Bindings.
 pub fn introspect<T: HostType>(
     script: &str,
-    bindings: &Bindings<T>,
+    bindings: &Environment<T>,
 ) -> Result<Introspection, WanderError> {
     let tokens_ws = tokenize(script).or(Ok(vec![]))?;
     let tokens = tokenize_and_filter(script).or(Ok(vec![]))?;
