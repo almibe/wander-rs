@@ -3,8 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::{
-    interpreter::Expression, parser::Element, HostFunction, HostFunctionBinding, TokenTransformer,
-    WanderType, WanderValue,
+    parser::Element, HostFunction, HostFunctionBinding, HostType, TokenTransformer, WanderValue,
 };
 use std::{
     cell::RefCell,
@@ -25,7 +24,7 @@ pub struct Bindings<T: Clone + PartialEq + Eq> {
 //     fn add_bindings(&self, bindings: &mut Bindings<T>);
 // }
 
-impl<T: Clone + PartialEq + Eq> Bindings<T> {
+impl<T: HostType> Bindings<T> {
     /// Create a new empty Bindings.
     pub fn new() -> Bindings<T> {
         Bindings {
@@ -75,17 +74,17 @@ impl<T: Clone + PartialEq + Eq> Bindings<T> {
         self.host_functions
             .borrow_mut()
             .insert(full_name.clone(), function.clone());
-        let mut p = function.binding().parameters.clone();
+        let mut parameters = function.binding().parameters.clone();
         let mut result = None;
-        p.reverse();
-        p.iter().for_each(|p| match &result {
+        parameters.reverse();
+        parameters.iter().for_each(|(name, tag)| match &result {
             Some(value) => match value {
                 WanderValue::Lambda(innerp, i, o, b) => {
-                    let p = p.clone();
+                    let p = parameters.clone();
                     result = Some(WanderValue::Lambda(
-                        p.0,
-                        p.1,
-                        WanderType::Any,
+                        name.clone(),
+                        tag.clone(),
+                        None,
                         Box::new(Element::Lambda(
                             innerp.clone(),
                             i.clone(),
@@ -97,11 +96,11 @@ impl<T: Clone + PartialEq + Eq> Bindings<T> {
                 _ => panic!("Should never reach."),
             },
             None => {
-                let p = p.clone();
+                let p = parameters.clone();
                 result = Some(WanderValue::Lambda(
-                    p.0,
-                    p.1,
-                    WanderType::Any,
+                    name.clone(),
+                    tag.clone(),
+                    None,
                     Box::new(Element::HostFunction(full_name.clone())),
                 ));
             }

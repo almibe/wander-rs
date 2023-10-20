@@ -4,10 +4,10 @@
 
 use std::rc::Rc;
 
-use wander::interpreter::eval;
-use wander::parser::Element;
-use wander::preludes::common;
-use wander::{HostFunction, HostFunctionBinding, HostValue, WanderError, WanderType, WanderValue};
+use wander::{
+    interpreter::eval, interpreter::Expression, preludes::common, HostFunction,
+    HostFunctionBinding, HostValue, WanderError, WanderValue,
+};
 
 struct SayHello {}
 impl HostFunction<String> for SayHello {
@@ -25,20 +25,20 @@ impl HostFunction<String> for SayHello {
         HostFunctionBinding {
             name: "hello".to_owned(),
             parameters: vec![],
-            result: WanderType::String,
+            result: None,
             doc_string: "Say hello!".to_owned(),
         }
     }
 }
 
 //#[test]
-// fn eval_host_value() {
-//     let mut bindings = common::<String>();
-//     bindings.bind_host_function(Rc::new(SayHello {}));
-//     let input = vec![Element::Application(vec![])];
-//     let res = eval(&input, &mut bindings);
-//     let expected = Ok(WanderValue::HostValue(HostValue {
-//         value: "hello!".to_owned(),
-//     }));
-//     assert_eq!(res, expected);
-// }
+fn eval_host_value() {
+    let mut bindings = common::<String>();
+    bindings.bind_host_function(Rc::new(SayHello {}));
+    let input = Expression::Nothing;
+    let res = eval(&input, &mut bindings);
+    let expected = Ok(WanderValue::HostValue(HostValue {
+        value: "hello!".to_owned(),
+    }));
+    assert_eq!(res, expected);
+}

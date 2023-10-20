@@ -40,6 +40,13 @@ fn process_pipes(element: &Element) -> Result<Element, WanderError> {
     Ok(Element::Grouping(results))
 }
 
+fn express_optional_name(name: &Option<String>) -> Result<Option<Expression>, WanderError> {
+    match name {
+        Some(element) => Ok(Some(express(&Element::Name(element.to_string()))?)),
+        None => Ok(None),
+    }
+}
+
 pub fn express(element: &Element) -> Result<Expression, WanderError> {
     let expression = match element {
         Element::Boolean(val) => Expression::Boolean(*val),
@@ -50,7 +57,13 @@ pub fn express(element: &Element) -> Result<Expression, WanderError> {
             decls
                 .clone()
                 .iter()
-                .map(|e| (e.0.clone(), express(&e.1).unwrap()))
+                .map(|e| {
+                    (
+                        e.0.clone(),
+                        express_optional_name(&e.1).unwrap(),
+                        express(&e.2).unwrap(),
+                    )
+                })
                 .collect(),
             Box::new(express(body).unwrap()),
         ),
@@ -89,11 +102,14 @@ pub fn express(element: &Element) -> Result<Expression, WanderError> {
             ))
         }
         Element::HostFunction(name) => Expression::HostFunction(name.clone()),
+        Element::TaggedName(name, tag) => {
+            Expression::TaggedName(name.clone(), Box::new(express(tag).unwrap()))
+        }
     };
     Ok(expression)
 }
 
-fn handle_grouping(elements: &Vec<Element>) -> Result<Expression, WanderError> {
+fn handle_grouping(elements: &[Element]) -> Result<Expression, WanderError> {
     let expressions: Vec<Expression> = elements
         .clone()
         .iter()

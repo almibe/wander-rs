@@ -11,7 +11,7 @@ use crate::bindings::Bindings;
 
 use crate::parser::Element;
 use crate::translation::express;
-use crate::{HostType, WanderError, WanderType, WanderValue};
+use crate::{HostType, WanderError, WanderValue};
 
 #[doc(hidden)]
 #[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
@@ -20,11 +20,15 @@ pub enum Expression {
     Int(i64),
     String(String),
     Name(String),
+    TaggedName(String, Box<Expression>),
     HostFunction(String),
-    Let(Vec<(String, Expression)>, Box<Expression>),
+    Let(
+        Vec<(String, Option<Expression>, Expression)>,
+        Box<Expression>,
+    ),
     Application(Vec<Expression>),
     Conditional(Box<Expression>, Box<Expression>, Box<Expression>),
-    Lambda(String, WanderType, WanderType, Box<Element>),
+    Lambda(String, Option<String>, Option<String>, Box<Element>),
     Tuple(Vec<Expression>),
     List(Vec<Expression>),
     Set(HashSet<Expression>),
@@ -48,13 +52,16 @@ pub fn eval<T: Clone + Display + PartialEq + Eq + std::fmt::Debug + Serialize>(
         Expression::String(value) => Ok(WanderValue::String(unescape_string(value.to_string()))),
         Expression::Let(decls, body) => handle_let(decls.clone(), *body.clone(), bindings),
         Expression::Name(name) => read_name(name, bindings),
+        Expression::TaggedName(name, tag) => read_tagged_name(name, tag, bindings),
         Expression::Application(expressions) => handle_function_call(expressions, bindings),
         Expression::Conditional(c, i, e) => handle_conditional(c, i, e, bindings),
         Expression::List(values) => handle_list(values, bindings),
         Expression::Nothing => Ok(WanderValue::Nothing),
         Expression::Tuple(values) => handle_tuple(values, bindings),
         Expression::Record(values) => handle_record(values, bindings),
-        Expression::Lambda(name, input, output, body) => handle_lambda(name, input, output, body),
+        Expression::Lambda(name, input, output, body) => {
+            handle_lambda(name.clone(), input.clone(), output.clone(), body)
+        }
         Expression::Set(values) => handle_set(values, bindings),
         Expression::HostFunction(name) => handle_host_function(name, bindings),
         // Expression::Grouping(expressions) => handle_grouping(expressions.clone(), bindings),
@@ -100,7 +107,7 @@ fn unescape_string(value: String) -> String {
     result
 }
 
-fn handle_host_function<T: Clone + Display + PartialEq + Eq>(
+fn handle_host_function<T: HostType>(
     name: &str,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -173,13 +180,13 @@ fn handle_list<T: HostType>(
 }
 
 fn handle_lambda<T: Clone + PartialEq + Eq>(
-    name: &str,
-    input: &WanderType,
-    output: &WanderType,
+    name: String,
+    input: Option<String>,
+    output: Option<String>,
     body: &Element,
 ) -> Result<WanderValue<T>, WanderError> {
     Ok(WanderValue::Lambda(
-        name.to_owned(),
+        name,
         input.clone(),
         output.clone(),
         Box::new(body.clone()),
@@ -203,8 +210,8 @@ fn handle_conditional<T: HostType + Display>(
 
 fn run_lambda<T: HostType + Display>(
     name: String,
-    input: WanderType,
-    output: WanderType,
+    input: Option<String>,
+    output: Option<String>,
     lambda_body: Element,
     expressions: &mut Vec<Expression>,
     bindings: &mut Bindings<T>,
@@ -362,21 +369,23 @@ fn value_to_expression<T: Clone + Display + PartialEq + Eq>(value: WanderValue<T
 }
 
 fn handle_let<T: HostType + Display>(
-    decls: Vec<(String, Expression)>,
+    decls: Vec<(String, Option<Expression>, Expression)>,
     body: Expression,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
-    for (name, body) in decls {
-        handle_decl(name, body, bindings)?;
+    for (name, tag, body) in decls {
+        handle_decl(name, tag, body, bindings)?;
     }
     eval(&body, bindings)
 }
 
 fn handle_decl<T: HostType + Display>(
     name: String,
+    tag: Option<Expression>,
     body: Expression,
     bindings: &mut Bindings<T>,
 ) -> Result<(), WanderError> {
+    //TODO handle tag checking here
     match eval(&body, bindings) {
         Ok(value) => {
             bindings.bind(name.to_string(), value);
@@ -386,7 +395,7 @@ fn handle_decl<T: HostType + Display>(
     }
 }
 
-fn read_name<T: Clone + PartialEq + Display + Eq + std::fmt::Debug>(
+fn read_name<T: HostType>(
     name: &String,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {
@@ -400,7 +409,22 @@ fn read_name<T: Clone + PartialEq + Display + Eq + std::fmt::Debug>(
     }
 }
 
-fn read_field<T: Clone + PartialEq + Display + Eq + std::fmt::Debug>(
+fn read_tagged_name<T: HostType>(
+    name: &String,
+    tag: &Box<Expression>,
+    bindings: &mut Bindings<T>,
+) -> Result<WanderValue<T>, WanderError> {
+    if let Some(value) = bindings.read(name) {
+        Ok(value)
+    } else {
+        match bindings.read_host_function(name) {
+            Some(_) => todo!(), //Ok(WanderValue::HostedFunction(name.to_owned())),
+            None => read_field(name, bindings),
+        }
+    }
+}
+
+fn read_field<T: HostType>(
     name: &str,
     bindings: &mut Bindings<T>,
 ) -> Result<WanderValue<T>, WanderError> {

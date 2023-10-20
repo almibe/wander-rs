@@ -4,7 +4,6 @@
 
 use wander::lexer::Token;
 use wander::parser::{parse, Element};
-use wander::WanderType;
 
 use crate::utilities::parse_str;
 
@@ -51,8 +50,8 @@ fn parse_lambda() {
     let res = parse(input);
     let expected = Ok(Element::Grouping(vec![Element::Lambda(
         "test".to_owned(),
-        WanderType::Any,
-        WanderType::Any,
+        None,
+        None,
         Box::new(Element::Grouping(vec![Element::Name("test".to_owned())])),
     )]));
     assert_eq!(res, expected);

@@ -2,12 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::collections::{HashMap, HashSet};
-
+use crate::{lexer::Token, WanderError};
 use gaze::Gaze;
 use serde::{Deserialize, Serialize};
-
-use crate::{lexer::Token, WanderError, WanderType};
+use std::collections::{HashMap, HashSet};
 
 #[doc(hidden)]
 #[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
@@ -16,11 +14,12 @@ pub enum Element {
     Int(i64),
     String(String),
     Name(String),
+    TaggedName(String, Box<Element>),
     HostFunction(String),
-    Let(Vec<(String, Element)>, Box<Element>),
+    Let(Vec<(String, Option<String>, Element)>, Box<Element>),
     Grouping(Vec<Element>),
     Conditional(Box<Element>, Box<Element>, Box<Element>),
-    Lambda(String, WanderType, WanderType, Box<Element>),
+    Lambda(String, Option<String>, Option<String>, Box<Element>),
     Tuple(Vec<Element>),
     List(Vec<Element>),
     Set(HashSet<Element>),
@@ -182,9 +181,19 @@ fn lambda(gaze: &mut Gaze<Token>) -> Option<Element> {
         _ => return None,
     }
 
-    let mut params: Vec<String> = vec![];
+    let mut params: Vec<(String, Option<String>)> = vec![];
+
     while let Some(Element::Name(name)) = gaze.attemptf(&mut name) {
-        params.push(name);
+        let tag = if gaze.peek() == Some(Token::Colon) {
+            gaze.next();
+            match gaze.next() {
+                Some(Token::Name(name)) => Some(name),
+                _ => return None, //no match
+            }
+        } else {
+            None
+        };
+        params.push((name, tag));
     }
 
     match gaze.next() {
@@ -195,21 +204,21 @@ fn lambda(gaze: &mut Gaze<Token>) -> Option<Element> {
     gaze.attemptf(&mut element).map(|body| {
         let mut final_lambda = None;
         params.reverse();
-        for name in params {
+        for (name, tag) in params {
             match final_lambda {
                 Some(prev_lambda) => {
                     final_lambda = Some(Element::Lambda(
                         name.clone(),
-                        WanderType::Any,
-                        WanderType::Any,
+                        None,
+                        None,
                         Box::new(prev_lambda),
                     ))
                 }
                 None => {
                     final_lambda = Some(Element::Lambda(
                         name.clone(),
-                        WanderType::Any,
-                        WanderType::Any,
+                        None,
+                        None,
                         Box::new(body.clone()),
                     ))
                 }
@@ -304,17 +313,29 @@ fn tuple(gaze: &mut Gaze<Token>) -> Option<Element> {
     }
 }
 
-fn val_binding(gaze: &mut Gaze<Token>) -> Option<(String, Element)> {
-    let name = match (gaze.next(), gaze.next(), gaze.next()) {
-        (Some(Token::Val), Some(Token::Name(name)), Some(Token::EqualSign)) => name,
+fn val_binding(gaze: &mut Gaze<Token>) -> Option<(String, Option<String>, Element)> {
+    let name = match (gaze.next(), gaze.next()) {
+        (Some(Token::Val), Some(Token::Name(name))) => name,
+        _ => return None,
+    };
+    let tag = match gaze.peek() {
+        Some(Token::Colon) => {
+            gaze.next();
+            if let Some(Token::Name(name)) = gaze.next() {
+                Some(name)
+            } else {
+                return None;
+            }
+        }
+        _ => None,
+    };
+
+    match gaze.next() {
+        Some(Token::EqualSign) => (),
         _ => return None,
     };
 
-    if let Some(body) = gaze.attemptf(&mut element) {
-        Some((name, body))
-    } else {
-        None
-    }
+    gaze.attemptf(&mut element).map(|body| (name, tag, body))
 }
 
 //this function is basically the same as element inner but it matches name instead of application

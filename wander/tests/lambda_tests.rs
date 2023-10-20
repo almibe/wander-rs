@@ -2,10 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use wander::{
-    interpreter::Expression, parser::Element, preludes::common, run, NoHostType, WanderType,
-    WanderValue,
-};
+use wander::{parser::Element, preludes::common, run, NoHostType, WanderValue};
 
 #[test]
 #[ignore = "function rewrite"]
@@ -74,8 +71,8 @@ fn parse_lambda() {
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let expected = WanderValue::Lambda(
         "x".to_owned(),
-        WanderType::Any,
-        WanderType::Any,
+        None,
+        None,
         Box::new(Element::Name("x".to_owned())),
     );
     assert_eq!(res, expected);
@@ -88,10 +85,10 @@ fn parse_multi_line_lambda() {
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let expected = WanderValue::Lambda(
         "x".to_owned(),
-        WanderType::Any,
-        WanderType::Any,
+        None,
+        None,
         Box::new(Element::Let(
-            vec![("x".to_owned(), Element::Boolean(true))],
+            vec![("x".to_owned(), None, Element::Boolean(true))],
             Box::new(Element::Name("x".to_owned())),
         )),
     );
@@ -121,12 +118,7 @@ fn define_and_call_lambda() {
 fn define_and_partially_call_lambda() {
     let input = "(\\x y -> 31) 5";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::Lambda(
-        "y".to_owned(),
-        WanderType::Any,
-        WanderType::Any,
-        Box::new(Element::Int(31)),
-    );
+    let expected = WanderValue::Lambda("y".to_owned(), None, None, Box::new(Element::Int(31)));
     assert_eq!(res, expected);
 }
 

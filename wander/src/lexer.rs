@@ -5,7 +5,7 @@
 use logos::{Lexer, Logos};
 use serde::Serialize;
 
-use crate::{bindings::Bindings, WanderError};
+use crate::{bindings::Bindings, HostType, WanderError};
 
 #[derive(Logos, Debug, PartialEq, Clone, Serialize)]
 #[logos()]
@@ -163,7 +163,7 @@ pub fn tokenize_and_filter(script: &str) -> Result<Vec<Token>, WanderError> {
     })
 }
 
-pub fn transform<T: Clone + PartialEq + Eq>(
+pub fn transform<T: HostType>(
     input: &[Token],
     bindings: &Bindings<T>,
 ) -> Result<Vec<Token>, WanderError> {

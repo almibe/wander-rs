@@ -39,8 +39,19 @@ pub struct WanderError(pub String);
 pub trait HostType: Debug + PartialEq + Eq + Serialize + Clone + Display + Serialize {}
 impl<T> HostType for T where T: Debug + PartialEq + Eq + Serialize + Clone + Display + Serialize {}
 
-trait TypeSystem<T: HostType> {
-    fn check(value: WanderValue<T>, type_value: WanderValue<T>) -> Result<bool, WanderError>;
+/// A trait for the pluggable type checker used by Wander.
+pub trait TypeChecker<T: HostType> {
+    /// Called when a value is assigned to a TaggedNamed.
+    fn check(value: WanderValue<T>, tag: WanderValue<T>) -> Result<bool, WanderError>;
+}
+
+/// A TypeChecker that does nothing, everything passes.
+pub struct EpsilonChecker {}
+
+impl<T: HostType> TypeChecker<T> for EpsilonChecker {
+    fn check(value: WanderValue<T>, tag: WanderValue<T>) -> Result<bool, WanderError> {
+        Ok(true)
+    }
 }
 
 /// This is a dummy type you can use when you don't need a HostType.
@@ -58,9 +69,9 @@ pub struct HostFunctionBinding {
     /// Name used to bind this HostFunction including Namespaces.
     pub name: String,
     /// The type of the parameters this HostFunction takes.
-    pub parameters: Vec<(String, WanderType)>,
+    pub parameters: Vec<(String, Option<String>)>,
     /// The type of the result of this HostFunction.
-    pub result: WanderType,
+    pub result: Option<String>,
     /// The documentation for this HostFunction.
     /// Can be text or Markdown.
     pub doc_string: String,
@@ -68,7 +79,7 @@ pub struct HostFunctionBinding {
 
 /// A trait representing a function exported from the hosting application that
 /// can be called from Wander.
-pub trait HostFunction<T: Clone + PartialEq + Eq> {
+pub trait HostFunction<T: HostType> {
     /// The function called when the HostFunction is called from Wander.
     fn run(
         &self,
@@ -81,29 +92,6 @@ pub trait HostFunction<T: Clone + PartialEq + Eq> {
 
 /// Type alias used for TokenTransformers.
 pub type TokenTransformer = fn(&[Token]) -> Result<Vec<Token>, WanderError>;
-
-/// Types of values allowed in Wander.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum WanderType {
-    /// Allow any type.
-    Any,
-    /// A Boolean value.
-    Boolean,
-    /// A signed 64-bit Integer.
-    Int,
-    /// A String value.
-    String,
-    /// The nothing value.
-    Nothing,
-    /// A Lambda.
-    Lambda,
-    /// A List.
-    List,
-    /// A tuple.
-    Tuple,
-    /// An Optional Value.
-    Optional(Box<WanderType>),
-}
 
 /// A value of a type provided by the host application that can be accessed via Wander.
 /// Note it cannot be accessed by Wander directly, only through HostFunctions.
@@ -127,7 +115,7 @@ pub enum WanderValue<T: Clone + PartialEq + Eq> {
     /// The nothing value.
     Nothing,
     /// A Lambda
-    Lambda(String, WanderType, WanderType, Box<Element>),
+    Lambda(String, Option<String>, Option<String>, Box<Element>),
     /// A List.
     List(Vec<WanderValue<T>>),
     /// A Tuple.
@@ -296,7 +284,7 @@ pub struct Introspection {
 }
 
 /// Run a Wander script with the given Bindings.
-pub fn introspect<T: Clone + PartialEq + Eq>(
+pub fn introspect<T: HostType>(
     script: &str,
     bindings: &Bindings<T>,
 ) -> Result<Introspection, WanderError> {

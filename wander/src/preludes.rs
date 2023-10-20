@@ -3,12 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::{
-    bindings::Bindings, HostFunction, HostFunctionBinding, WanderError, WanderType, WanderValue,
+    bindings::Bindings, HostFunction, HostFunctionBinding, HostType, WanderError, WanderValue,
 };
 use std::rc::Rc;
 
 struct EqFunction {}
-impl<T: Clone + PartialEq + Eq> HostFunction<T> for EqFunction {
+impl<T: HostType> HostFunction<T> for EqFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
@@ -26,18 +26,15 @@ impl<T: Clone + PartialEq + Eq> HostFunction<T> for EqFunction {
     fn binding(&self) -> HostFunctionBinding {
         HostFunctionBinding {
             name: "Core.eq".to_owned(),
-            parameters: vec![
-                ("left".to_owned(), WanderType::Any),
-                ("right".to_owned(), WanderType::Any),
-            ],
-            result: WanderType::Any,
+            parameters: vec![("left".to_owned(), None), ("right".to_owned(), None)],
+            result: None,
             doc_string: "Check if two values are equal.".to_owned(),
         }
     }
 }
 
 struct AssertEqFunction {}
-impl<T: Clone + PartialEq + Eq> HostFunction<T> for AssertEqFunction {
+impl<T: HostType> HostFunction<T> for AssertEqFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
@@ -59,18 +56,15 @@ impl<T: Clone + PartialEq + Eq> HostFunction<T> for AssertEqFunction {
     fn binding(&self) -> HostFunctionBinding {
         HostFunctionBinding {
             name: "Assert.assertEq".to_owned(),
-            parameters: vec![
-                ("value".to_owned(), WanderType::Any),
-                ("expected".to_owned(), WanderType::Any),
-            ],
-            result: WanderType::Nothing,
+            parameters: vec![("value".to_owned(), None), ("expected".to_owned(), None)],
+            result: None,
             doc_string: "Assert that two values are equal.".to_owned(),
         }
     }
 }
 
 struct AndFunction {}
-impl<T: Clone + PartialEq + Eq> HostFunction<T> for AndFunction {
+impl<T: HostType> HostFunction<T> for AndFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
@@ -89,17 +83,17 @@ impl<T: Clone + PartialEq + Eq> HostFunction<T> for AndFunction {
         HostFunctionBinding {
             name: "Bool.and".to_owned(),
             parameters: vec![
-                ("left".to_owned(), WanderType::Boolean),
-                ("right".to_owned(), WanderType::Boolean),
+                ("left".to_owned(), None),  // bool
+                ("right".to_owned(), None), // bool
             ],
-            result: WanderType::Boolean,
+            result: None, // bool
             doc_string: "Check if two boolean values are both true.".to_owned(),
         }
     }
 }
 
 struct NotFunction {}
-impl<T: Clone + PartialEq + Eq> HostFunction<T> for NotFunction {
+impl<T: HostType> HostFunction<T> for NotFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
@@ -117,15 +111,15 @@ impl<T: Clone + PartialEq + Eq> HostFunction<T> for NotFunction {
     fn binding(&self) -> HostFunctionBinding {
         HostFunctionBinding {
             name: "Bool.not".to_owned(),
-            parameters: vec![("value".to_owned(), WanderType::Boolean)],
-            result: WanderType::Boolean,
+            parameters: vec![("value".to_owned(), None)], // bool
+            result: None,                                 // bool
             doc_string: "Return the opposite of the boolean value passed.".to_owned(),
         }
     }
 }
 
 struct AtFunction {}
-impl<T: Clone + PartialEq + Eq> HostFunction<T> for AtFunction {
+impl<T: HostType> HostFunction<T> for AtFunction {
     fn run(
         &self,
         arguments: &[WanderValue<T>],
@@ -151,10 +145,10 @@ impl<T: Clone + PartialEq + Eq> HostFunction<T> for AtFunction {
         HostFunctionBinding {
             name: "List.at".to_owned(),
             parameters: vec![
-                ("offset".to_owned(), WanderType::Int),
-                ("list".to_owned(), WanderType::List),
+                ("offset".to_owned(), None), //Int
+                ("list".to_owned(), None),   //List
             ],
-            result: WanderType::Any,
+            result: None,
             doc_string: "Get the value at a given location.".to_owned(),
         }
     }
@@ -218,7 +212,7 @@ impl<T: Clone + PartialEq + Eq> HostFunction<T> for AtFunction {
 
 /// Creates a set of Bindings for Wander that consists of all of the common
 /// functionality, but doesn't interact with an instance of Ligature.
-pub fn common<T: Clone + PartialEq + Eq>() -> Bindings<T> {
+pub fn common<T: HostType>() -> Bindings<T> {
     let mut bindings = Bindings::new();
     bindings.bind_host_function(Rc::new(EqFunction {}));
 
