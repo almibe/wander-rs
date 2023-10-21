@@ -32,7 +32,7 @@ pub mod preludes;
 pub mod translation;
 
 /// An error that occurs while running a Wander script.
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, Clone)]
 pub struct WanderError(pub String);
 
 /// A combination of all the traits needed to implement a HostType.

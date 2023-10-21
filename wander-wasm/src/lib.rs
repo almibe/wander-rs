@@ -5,25 +5,25 @@
 //! This project exposes functionality from the Rust implementation of Wander to WASM and JS runtimes thanks to wasm-bindgen and wasm-pack.
 
 mod utils;
-use wander::{WanderValue, HostType};
+use wander::{WanderValue, HostType, WanderError};
 use wasm_bindgen::prelude::*;
 use serde::Serialize;
 
 #[wasm_bindgen]
 pub fn run(script: String) -> JsValue {
     let mut bindings = wander::preludes::common::<wander::NoHostType>();
-    let res = wander::run(&script, &mut bindings).unwrap();
+    let res = wander::run(&script, &mut bindings);
     let res = RunResult {
         object: res.clone(),
-        string: format!("{}", res.clone())
+        string: res.map(|res| format!("{}", res))
     };
     serde_wasm_bindgen::to_value(&res).unwrap()
 }
 
 #[derive(Serialize)]
 pub struct RunResult<T: HostType> {
-    object: WanderValue<T>,
-    string: String
+    object: Result<WanderValue<T>,WanderError>,
+    string: Result<String, WanderError>
 }
 
 #[wasm_bindgen]
