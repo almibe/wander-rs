@@ -42,14 +42,14 @@ impl<T> HostType for T where T: Debug + PartialEq + Eq + Serialize + Clone + Dis
 /// A trait for the pluggable type checker used by Wander.
 pub trait TypeChecker<T: HostType> {
     /// Called when a value is assigned to a TaggedNamed.
-    fn check(self: &Self, value: WanderValue<T>, tag: WanderValue<T>) -> Result<bool, WanderError>;
+    fn check(&self, value: WanderValue<T>, tag: WanderValue<T>) -> Result<bool, WanderError>;
 }
 
 /// A TypeChecker that does nothing, everything passes.
 pub struct EpsilonChecker {}
 
 impl<T: HostType> TypeChecker<T> for EpsilonChecker {
-    fn check(self: &Self, value: WanderValue<T>, tag: WanderValue<T>) -> Result<bool, WanderError> {
+    fn check(&self, _value: WanderValue<T>, _tag: WanderValue<T>) -> Result<bool, WanderError> {
         Ok(true)
     }
 }

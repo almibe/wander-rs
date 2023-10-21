@@ -1,8 +1,8 @@
 [package]
 name = "wander-wasm"
 description = "Wasm support for Wander."
-version = "0.3.2"
-private = true
+version = "0.5.0"
+publish = false
 license = "MPL-2.0"
 authors = ["Alex Michael Berry <alexmiberry@gmail.com>"]
 edition = "2021"
