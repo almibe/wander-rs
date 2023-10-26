@@ -8,7 +8,7 @@ use wander::{preludes::common, run, NoHostType, WanderValue};
 fn run_wander_true() {
     let input = "true";
     let res = run(input, &mut common::<NoHostType>());
-    let expected = Ok(WanderValue::Boolean(true));
+    let expected = Ok(WanderValue::Bool(true));
     assert_eq!(res, expected);
 }
 
@@ -40,7 +40,7 @@ fn run_wander_let_binding() {
 fn run_wander_let_binding_and_reference() {
     let input = "let val x = true in x end";
     let res = run(input, &mut common::<NoHostType>());
-    let expected = Ok(WanderValue::Boolean(true));
+    let expected = Ok(WanderValue::Bool(true));
     assert_eq!(res, expected);
 }
 
@@ -48,7 +48,7 @@ fn run_wander_let_binding_and_reference() {
 fn run_native_function() {
     let input = "Bool.not true";
     let res = run(input, &mut common::<NoHostType>());
-    let expected = Ok(WanderValue::Boolean(false));
+    let expected = Ok(WanderValue::Bool(false));
     assert_eq!(res, expected);
 }
 
@@ -56,7 +56,7 @@ fn run_native_function() {
 fn run_nested_function_calls() {
     let input = "Bool.not (Bool.not false)";
     let res = run(input, &mut common::<NoHostType>());
-    let expected = Ok(WanderValue::Boolean(false));
+    let expected = Ok(WanderValue::Bool(false));
     assert_eq!(res, expected);
 }
 
@@ -115,7 +115,7 @@ fn run_lambda() {
 fn host_function_calls() {
     let input = r#"Bool.not true"#;
     let res = run(input, &mut common::<NoHostType>());
-    let expected = Ok(WanderValue::Boolean(false));
+    let expected = Ok(WanderValue::Bool(false));
     assert_eq!(res, expected);
 }
 
@@ -129,8 +129,8 @@ fn run_lambda_with_host_function_calls() {
     end"#;
     let res = run(input, &mut common::<NoHostType>());
     let expected = Ok(WanderValue::List(vec![
-        WanderValue::Boolean(false),
-        WanderValue::Boolean(true),
+        WanderValue::Bool(false),
+        WanderValue::Bool(true),
     ]));
     assert_eq!(res, expected);
 }
@@ -139,7 +139,7 @@ fn run_lambda_with_host_function_calls() {
 fn pipe_operator() {
     let input = "true | Bool.not";
     let res = run(input, &mut common::<NoHostType>());
-    let expected = Ok(WanderValue::Boolean(false));
+    let expected = Ok(WanderValue::Bool(false));
     assert_eq!(res, expected);
 }
 

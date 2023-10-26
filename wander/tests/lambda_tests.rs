@@ -18,8 +18,8 @@ fn basic_currying() {
     let res = format!("{res}");
     let res = run(&res, &mut common::<NoHostType>()).unwrap();
     let expected = WanderValue::List(vec![
-        WanderValue::Boolean(true),
-        WanderValue::Boolean(false),
+        WanderValue::Bool(true),
+        WanderValue::Bool(false),
     ]);
     assert_eq!(res, expected);
 }
@@ -40,8 +40,8 @@ fn currying_with_lambda() {
     let res = format!("{res}");
     let res = run(&res, &mut common::<NoHostType>()).unwrap();
     let expected = WanderValue::List(vec![
-        WanderValue::Boolean(true),
-        WanderValue::Boolean(false),
+        WanderValue::Bool(true),
+        WanderValue::Bool(false),
     ]);
     assert_eq!(res, expected);
 }
@@ -60,7 +60,7 @@ fn currying_twice_with_lambda() {
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     // let res = format!("{res}");
     // let res = run(&res, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::Boolean(false);
+    let expected = WanderValue::Bool(false);
     assert_eq!(res, expected);
 }
 
@@ -100,7 +100,7 @@ fn parse_multi_line_lambda() {
 fn multi_param_lambda() {
     let input = "Core.eq \\x y -> x \\x -> \\y -> x";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::Boolean(true);
+    let expected = WanderValue::Bool(true);
     assert_eq!(res, expected);
 }
 
@@ -109,7 +109,7 @@ fn multi_param_lambda() {
 fn define_and_call_lambda() {
     let input = "\\x -> true 45";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::Boolean(true);
+    let expected = WanderValue::Bool(true);
     assert_eq!(res, expected);
 }
 
@@ -127,7 +127,7 @@ fn define_and_partially_call_lambda() {
 fn group_a_value() {
     let input = "(true)";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::Boolean(true);
+    let expected = WanderValue::Bool(true);
     assert_eq!(res, expected);
 }
 
@@ -136,6 +136,6 @@ fn group_a_value() {
 fn group_a_function_call() {
     let input = "Bool.and false (Bool.not true)";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::Boolean(true);
+    let expected = WanderValue::Bool(true);
     assert_eq!(res, expected);
 }

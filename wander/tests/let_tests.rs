@@ -16,7 +16,7 @@ fn basic_let() {
 fn basic_let_multiple_vals() {
     let input = "let val x = true val y = Bool.and x in y x end";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::Boolean(true);
+    let expected = WanderValue::Bool(true);
     assert_eq!(res, expected);
 }
 
@@ -35,7 +35,7 @@ fn nested_lets() {
           y
         end"#;
     let res = run(input, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::Boolean(true);
+    let expected = WanderValue::Bool(true);
     assert_eq!(res, expected);
 }
 
@@ -50,7 +50,7 @@ fn lets_with_function_calls_in_decl() {
         end
     "#;
     let res = run(input, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::Boolean(false);
+    let expected = WanderValue::Bool(false);
     assert_eq!(res, expected);
 }
 
@@ -71,6 +71,6 @@ fn nested_lets_with_function_calls() {
         end
         "#;
     let res = run(input, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::Boolean(false);
+    let expected = WanderValue::Bool(false);
     assert_eq!(res, expected);
 }

@@ -47,7 +47,7 @@ pub fn eval<T: Clone + Display + PartialEq + Eq + std::fmt::Debug + Serialize>(
     environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     match expression {
-        Expression::Boolean(value) => Ok(WanderValue::Boolean(*value)),
+        Expression::Boolean(value) => Ok(WanderValue::Bool(*value)),
         Expression::Int(value) => Ok(WanderValue::Int(*value)),
         Expression::String(value) => Ok(WanderValue::String(unescape_string(value.to_string()))),
         Expression::Let(decls, body) => handle_let(decls.clone(), *body.clone(), environment),
@@ -200,8 +200,8 @@ fn handle_conditional<T: HostType + Display>(
     environment: &mut Environment<T>,
 ) -> Result<WanderValue<T>, WanderError> {
     match eval(cond, environment)? {
-        WanderValue::Boolean(true) => eval(ife, environment),
-        WanderValue::Boolean(false) => eval(elsee, environment),
+        WanderValue::Bool(true) => eval(ife, environment),
+        WanderValue::Bool(false) => eval(elsee, environment),
         value => Err(WanderError(format!(
             "Conditionals require a bool value found, {value}"
         ))),
@@ -331,7 +331,7 @@ fn handle_function_call<T: HostType>(
 
 fn value_to_expression<T: Clone + Display + PartialEq + Eq>(value: WanderValue<T>) -> Expression {
     match value {
-        WanderValue::Boolean(value) => Expression::Boolean(value),
+        WanderValue::Bool(value) => Expression::Boolean(value),
         WanderValue::Int(value) => Expression::Int(value),
         WanderValue::String(value) => Expression::String(value),
         WanderValue::Nothing => Expression::Nothing,

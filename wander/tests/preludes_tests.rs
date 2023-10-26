@@ -8,7 +8,7 @@ use wander::{preludes::common, run, NoHostType, WanderValue};
 fn calling_not() {
     let input = "Bool.not true";
     let res = run(input, &mut common::<NoHostType>());
-    let expected = Ok(WanderValue::Boolean(false));
+    let expected = Ok(WanderValue::Bool(false));
     assert_eq!(res, expected);
 }
 

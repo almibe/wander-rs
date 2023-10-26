@@ -30,6 +30,7 @@ pub mod parser;
 pub mod preludes;
 #[doc(hidden)]
 pub mod translation;
+pub mod identifier;
 
 /// An error that occurs while running a Wander script.
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize, Clone)]
@@ -64,7 +65,7 @@ impl Display for NoHostType {
     }
 }
 
-/// Data for
+/// struct describing a HostFunction.
 pub struct HostFunctionBinding {
     /// Name used to bind this HostFunction including Namespaces.
     pub name: String,
@@ -106,9 +107,9 @@ pub struct HostValue<T> {
 /// Wander and the host application.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum WanderValue<T: Clone + PartialEq + Eq> {
-    /// A Boolean value.
-    Boolean(bool),
-    /// An Integer value.
+    /// A Bool value.
+    Bool(bool),
+    /// A 64-bit signed integer value.
     Int(i64),
     /// A String value.
     String(String),
@@ -236,7 +237,7 @@ fn write_record<T: Clone + Display + PartialEq + Eq + Debug>(
 impl<T: Clone + Display + PartialEq + Eq + std::fmt::Debug> Display for WanderValue<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            WanderValue::Boolean(value) => write!(f, "{}", value),
+            WanderValue::Bool(value) => write!(f, "{}", value),
             WanderValue::Int(value) => write!(f, "{}", value),
             WanderValue::String(value) => f.write_str(&write_string(value)),
             WanderValue::Nothing => write!(f, "nothing"),

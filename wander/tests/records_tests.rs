@@ -43,7 +43,7 @@ fn nested_record() {
 fn record_field_access() {
     let input = "let val x = {a = 24 b = true} in x.b end";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::Boolean(true);
+    let expected = WanderValue::Bool(true);
     assert_eq!(res, expected);
 }
 

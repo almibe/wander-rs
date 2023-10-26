@@ -10,7 +10,7 @@ use wander::{NoHostType, WanderValue};
 fn eval_boolean_true() {
     let input = Expression::Boolean(true);
     let res = eval(&input, &mut common::<NoHostType>());
-    let expected = Ok(WanderValue::Boolean(true));
+    let expected = Ok(WanderValue::Bool(true));
     assert_eq!(res, expected);
 }
 

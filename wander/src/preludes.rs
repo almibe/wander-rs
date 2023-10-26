@@ -15,7 +15,7 @@ impl<T: HostType> HostFunction<T> for EqFunction {
         _bindings: &Environment<T>,
     ) -> Result<WanderValue<T>, WanderError> {
         if let [left, right] = arguments {
-            Ok(crate::WanderValue::Boolean(left == right))
+            Ok(crate::WanderValue::Bool(left == right))
         } else {
             Err(WanderError(
                 "`eq` function requires two parameters.".to_owned(),
@@ -70,8 +70,8 @@ impl<T: HostType> HostFunction<T> for AndFunction {
         arguments: &[WanderValue<T>],
         _bindings: &Environment<T>,
     ) -> Result<crate::WanderValue<T>, WanderError> {
-        if let [WanderValue::Boolean(left), WanderValue::Boolean(right)] = arguments[..] {
-            Ok(crate::WanderValue::Boolean(left && right))
+        if let [WanderValue::Bool(left), WanderValue::Bool(right)] = arguments[..] {
+            Ok(crate::WanderValue::Bool(left && right))
         } else {
             Err(WanderError(
                 "`and` function requires two boolean parameters.".to_owned(),
@@ -99,8 +99,8 @@ impl<T: HostType> HostFunction<T> for NotFunction {
         arguments: &[WanderValue<T>],
         _bindings: &Environment<T>,
     ) -> Result<crate::WanderValue<T>, WanderError> {
-        if let [WanderValue::Boolean(value)] = arguments[..] {
-            Ok(crate::WanderValue::Boolean(!value))
+        if let [WanderValue::Bool(value)] = arguments[..] {
+            Ok(crate::WanderValue::Bool(!value))
         } else {
             Err(WanderError(
                 "`not` function requires one boolean parameter.".to_owned(),

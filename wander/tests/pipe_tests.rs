@@ -80,14 +80,14 @@ fn parse_pipe_application_to_application() {
 #[test]
 fn run_pipe_value_to_name() {
     let res = run("false | Bool.not", &mut common::<NoHostType>());
-    let expected = Ok(WanderValue::Boolean(true));
+    let expected = Ok(WanderValue::Bool(true));
     assert_eq!(res, expected);
 }
 
 #[test]
 fn run_pipe_value_to_application() {
     let res = run("false | Bool.and true", &mut common::<NoHostType>());
-    let expected = Ok(WanderValue::Boolean(false));
+    let expected = Ok(WanderValue::Bool(false));
     assert_eq!(res, expected);
 }
 
@@ -97,7 +97,7 @@ fn run_pipe_application_to_application() {
         "Bool.not false | Bool.and true",
         &mut common::<NoHostType>(),
     );
-    let expected = Ok(WanderValue::Boolean(true));
+    let expected = Ok(WanderValue::Bool(true));
     assert_eq!(res, expected);
 }
 
@@ -107,6 +107,6 @@ fn run_multiple_pipes() {
         "Bool.not false | Bool.and true | Bool.not",
         &mut common::<NoHostType>(),
     );
-    let expected = Ok(WanderValue::Boolean(false));
+    let expected = Ok(WanderValue::Bool(false));
     assert_eq!(res, expected);
 }
