@@ -20,3 +20,20 @@ This project is very new, so expect a lot of breaking changes during design and 
 ## Documentation
 
 See https://wander-lang.dev/docs/
+
+## Crates in this repo
+
+| Name        | Description                                                                    | Output   |
+| ----------- | ------------------------------------------------------------------------------ | -------- |
+| wander      | The main crate that includes the parser + data model + interpreter for Wander. | lib      |
+| wander-repl | A basic REPL for Wander based on rustyline.                                    | bin      |
+| wander-pad  | A simple GTK4 based desktop application for working with Wander.               | bin      |
+| wander-wasm | wasm-bindgen support for Wander.                                               | wasm/npm |
+
+## Related projects
+
+| Name                                                             | Description                                       |
+| ---------------------------------------------------------------- | ------------------------------------------------- |
+| [wander-lang.dev](https://github.com/almibe/wander-lang.dev)     | The main website + documentation for Wander.      |
+| [wander-components](https://github.com/almibe/wander-components) | A set of web components for working with Wander.  |
+| [wander-ide](https://github.com/almibe/wander-ide)               | An Integrated Development Environment for Wander. |

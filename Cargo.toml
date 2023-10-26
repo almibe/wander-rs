@@ -1,7 +1,10 @@
 [workspace]
 
+resolver = "2"
+
 members = [
     "wander",
     "wander-repl",
     "wander-wasm",
+    "wander-pad",
 ]
