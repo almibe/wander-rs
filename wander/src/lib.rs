@@ -292,8 +292,8 @@ pub fn introspect<T: HostType>(
     let tokens_ws = tokenize(script).or(Ok(vec![]))?;
     let tokens = tokenize_and_filter(script).or(Ok(vec![]))?;
     let tokens_transformed = transform(&tokens.clone(), bindings).or(Ok(vec![]))?;
-    let element = parse(tokens_transformed.clone())?; //.or(Ok(Element::String("Error".to_owned())))?; //TODO handle errors better
-    let expression = translate(element.clone())?; //.or(Ok(Expression::String("Error".to_owned())))?; //TODO handle errors better
+    let element = parse(tokens_transformed.clone()).or(Ok(Element::String("Error".to_owned())))?; //TODO handle errors better
+    let expression = translate(element.clone()).or(Ok(Expression::String("Error".to_owned())))?; //TODO handle errors better
     Ok(Introspection {
         tokens_ws,
         tokens,
