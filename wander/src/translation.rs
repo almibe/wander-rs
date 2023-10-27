@@ -52,6 +52,7 @@ pub fn express(element: &Element) -> Result<Expression, WanderError> {
         Element::Boolean(val) => Expression::Boolean(*val),
         Element::Int(val) => Expression::Int(*val),
         Element::String(val) => Expression::String(val.clone()),
+        Element::Identifier(value) => Expression::Identifier(value.clone()),
         Element::Name(name) => Expression::Name(name.clone()),
         Element::Let(decls, body) => Expression::Let(
             decls
@@ -111,7 +112,6 @@ pub fn express(element: &Element) -> Result<Expression, WanderError> {
 
 fn handle_grouping(elements: &[Element]) -> Result<Expression, WanderError> {
     let expressions: Vec<Expression> = elements
-        .clone()
         .iter()
         .map(|e| express(e).unwrap())
         .collect();

@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::environment::Environment;
 
+use crate::identifier::Identifier;
 use crate::parser::Element;
 use crate::translation::express;
 use crate::{HostType, WanderError, WanderValue};
@@ -19,6 +20,7 @@ pub enum Expression {
     Boolean(bool),
     Int(i64),
     String(String),
+    Identifier(Identifier),
     Name(String),
     TaggedName(String, Box<Expression>),
     HostFunction(String),
@@ -50,6 +52,7 @@ pub fn eval<T: Clone + Display + PartialEq + Eq + std::fmt::Debug + Serialize>(
         Expression::Boolean(value) => Ok(WanderValue::Bool(*value)),
         Expression::Int(value) => Ok(WanderValue::Int(*value)),
         Expression::String(value) => Ok(WanderValue::String(unescape_string(value.to_string()))),
+        Expression::Identifier(value) => Ok(WanderValue::Identifier(value.clone())),
         Expression::Let(decls, body) => handle_let(decls.clone(), *body.clone(), environment),
         Expression::Name(name) => read_name(name, environment),
         Expression::TaggedName(name, tag) => read_tagged_name(name, tag, environment),
@@ -334,6 +337,7 @@ fn value_to_expression<T: Clone + Display + PartialEq + Eq>(value: WanderValue<T
         WanderValue::Bool(value) => Expression::Boolean(value),
         WanderValue::Int(value) => Expression::Int(value),
         WanderValue::String(value) => Expression::String(value),
+        WanderValue::Identifier(value) => Expression::Identifier(value),
         WanderValue::Nothing => Expression::Nothing,
         WanderValue::Lambda(p, i, o, b) => Expression::Lambda(p, i, o, b),
         WanderValue::List(values) => {

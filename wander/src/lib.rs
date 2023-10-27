@@ -12,6 +12,7 @@ use std::{
 };
 
 use environment::Environment;
+use identifier::Identifier;
 use interpreter::{eval, Expression};
 use lexer::{tokenize, tokenize_and_filter, transform, Token};
 use parser::{parse, Element};
@@ -113,6 +114,8 @@ pub enum WanderValue<T: Clone + PartialEq + Eq> {
     Int(i64),
     /// A String value.
     String(String),
+    /// An Identifier.
+    Identifier(Identifier),
     /// The nothing value.
     Nothing,
     /// A Lambda
@@ -240,6 +243,7 @@ impl<T: Clone + Display + PartialEq + Eq + std::fmt::Debug> Display for WanderVa
             WanderValue::Bool(value) => write!(f, "{}", value),
             WanderValue::Int(value) => write!(f, "{}", value),
             WanderValue::String(value) => f.write_str(&write_string(value)),
+            WanderValue::Identifier(value) => write!(f, "<{}>", value.id()),
             WanderValue::Nothing => write!(f, "nothing"),
             WanderValue::List(contents) => write_list_or_tuple_wander_value("[", ']', contents, f),
             WanderValue::HostValue(value) => write_host_value(value, f),

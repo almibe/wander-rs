@@ -5,7 +5,6 @@
 use wander::{parser::Element, preludes::common, run, NoHostType, WanderValue};
 
 #[test]
-#[ignore = "function rewrite"]
 fn basic_currying() {
     let input = r#"
     let
@@ -25,7 +24,6 @@ fn basic_currying() {
 }
 
 #[test]
-#[ignore = "function rewrite"]
 fn currying_with_lambda() {
     let input = r#"
         let
@@ -65,7 +63,6 @@ fn currying_twice_with_lambda() {
 }
 
 #[test]
-#[ignore = "function rewrite"]
 fn parse_lambda() {
     let input = "\\x -> x";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
@@ -73,13 +70,12 @@ fn parse_lambda() {
         "x".to_owned(),
         None,
         None,
-        Box::new(Element::Name("x".to_owned())),
+        Box::new(Element::Grouping(vec![Element::Name("x".to_owned())])),
     );
     assert_eq!(res, expected);
 }
 
 #[test]
-#[ignore = "function rewrite"]
 fn parse_multi_line_lambda() {
     let input = "\\x -> let val x = true in x end";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
@@ -88,42 +84,39 @@ fn parse_multi_line_lambda() {
         None,
         None,
         Box::new(Element::Let(
-            vec![("x".to_owned(), None, Element::Boolean(true))],
-            Box::new(Element::Name("x".to_owned())),
+            vec![("x".to_owned(), None, Element::Grouping(vec![Element::Boolean(true)]))],
+            Box::new(Element::Grouping(vec![Element::Name("x".to_owned())])),
         )),
     );
     assert_eq!(res, expected);
 }
 
 #[test]
-#[ignore = "function rewrite"]
+#[ignore = "Revisit when working on https://github.com/almibe/wander/issues/37"]
 fn multi_param_lambda() {
-    let input = "Core.eq \\x y -> x \\x -> \\y -> x";
+    let input = "Core.eq (\\x y -> x) (\\x -> \\y -> x)";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let expected = WanderValue::Bool(true);
     assert_eq!(res, expected);
 }
 
 #[test]
-#[ignore = "function rewrite"]
 fn define_and_call_lambda() {
-    let input = "\\x -> true 45";
+    let input = "let val x = \\x -> true in x 45 end";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let expected = WanderValue::Bool(true);
     assert_eq!(res, expected);
 }
 
 #[test]
-#[ignore = "function rewrite"]
 fn define_and_partially_call_lambda() {
-    let input = "(\\x y -> 31) 5";
+    let input = "let val x = \\x y -> 31 in x 5 end";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::Lambda("y".to_owned(), None, None, Box::new(Element::Int(31)));
+    let expected = WanderValue::Lambda("y".to_owned(), None, None, Box::new(Element::Grouping(vec![Element::Int(31)])));
     assert_eq!(res, expected);
 }
 
 #[test]
-#[ignore = "function rewrite"]
 fn group_a_value() {
     let input = "(true)";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
@@ -132,10 +125,9 @@ fn group_a_value() {
 }
 
 #[test]
-#[ignore = "function rewrite"]
 fn group_a_function_call() {
     let input = "Bool.and false (Bool.not true)";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::Bool(true);
+    let expected = WanderValue::Bool(false);
     assert_eq!(res, expected);
 }

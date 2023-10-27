@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::{lexer::Token, WanderError};
+use crate::{lexer::Token, WanderError, identifier::Identifier};
 use gaze::Gaze;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -13,6 +13,7 @@ pub enum Element {
     Boolean(bool),
     Int(i64),
     String(String),
+    Identifier(Identifier),
     Name(String),
     TaggedName(String, Box<Element>),
     HostFunction(String),
@@ -44,6 +45,13 @@ fn boolean(gaze: &mut Gaze<Token>) -> Option<Element> {
 fn int(gaze: &mut Gaze<Token>) -> Option<Element> {
     match gaze.next() {
         Some(Token::Int(value)) => Some(Element::Int(value)),
+        _ => None,
+    }
+}
+
+fn identifier(gaze: &mut Gaze<Token>) -> Option<Element> {
+    match gaze.next() {
+        Some(Token::Identifier(value)) => Some(Element::Identifier(value)),
         _ => None,
     }
 }
@@ -348,6 +356,7 @@ fn element_inner(gaze: &mut Gaze<Token>) -> Option<Element> {
         boolean,
         nothing,
         int,
+        identifier,
         string,
         let_scope,
         grouped_application,
