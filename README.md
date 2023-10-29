@@ -26,9 +26,9 @@ See https://wander-lang.dev/docs/
 | Name        | Description                                                                    | Output   |
 | ----------- | ------------------------------------------------------------------------------ | -------- |
 | wander      | The main crate that includes the parser + data model + interpreter for Wander. | lib      |
-| wander-repl | A basic REPL for Wander based on rustyline.                                    | bin      |
-| wander-pad  | A simple GTK4 based desktop application for working with Wander.               | bin      |
-| wander-wasm | wasm-bindgen support for Wander.                                               | wasm/npm |
+| wander-repl | A basic REPL for Wander based on rustyline.                                    | bin/lib  |
+| wander-pad  | A simple egui based desktop application for working with Wander.               | bin/lib  |
+| wander-wasm | Wasm support for Wander based on wasm-bindgen.                                 | wasm/npm |
 
 ## Related projects
 
