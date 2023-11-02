@@ -3,8 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use eframe::egui;
-use wander::{run, NoHostType};
 use wander::preludes::common;
+use wander::{run, NoHostType};
 
 pub fn start_app() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {

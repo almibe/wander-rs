@@ -4,10 +4,10 @@
 
 //! This module is the main module for the ligature-repl project.
 
-use wander_repl::{start_repl, REPLState};
 pub use rustyline::Result;
 use wander::preludes::common;
 use wander::NoHostType;
+use wander_repl::{start_repl, REPLState};
 
 fn main() -> Result<()> {
     let bindings = common::<NoHostType>();

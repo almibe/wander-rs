@@ -21,6 +21,7 @@ use translation::translate;
 
 #[doc(hidden)]
 pub mod environment;
+pub mod identifier;
 #[doc(hidden)]
 pub mod interpreter;
 #[doc(hidden)]
@@ -31,7 +32,6 @@ pub mod parser;
 pub mod preludes;
 #[doc(hidden)]
 pub mod translation;
-pub mod identifier;
 
 /// An error that occurs while running a Wander script.
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize, Clone)]

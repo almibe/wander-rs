@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::{lexer::Token, WanderError, identifier::Identifier};
+use crate::{identifier::Identifier, lexer::Token, WanderError};
 use gaze::Gaze;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};

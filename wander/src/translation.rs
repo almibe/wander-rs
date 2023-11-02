@@ -111,10 +111,7 @@ pub fn express(element: &Element) -> Result<Expression, WanderError> {
 }
 
 fn handle_grouping(elements: &[Element]) -> Result<Expression, WanderError> {
-    let expressions: Vec<Expression> = elements
-        .iter()
-        .map(|e| express(e).unwrap())
-        .collect();
+    let expressions: Vec<Expression> = elements.iter().map(|e| express(e).unwrap()).collect();
     let expressions: Vec<Expression> = expressions
         .iter()
         .map(|e| match e {

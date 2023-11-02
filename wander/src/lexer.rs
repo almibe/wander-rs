@@ -5,7 +5,7 @@
 use logos::{Lexer, Logos};
 use serde::Serialize;
 
-use crate::{environment::Environment, HostType, WanderError, identifier::Identifier};
+use crate::{environment::Environment, identifier::Identifier, HostType, WanderError};
 
 #[derive(Logos, Debug, PartialEq, Clone, Serialize)]
 #[logos()]
@@ -49,13 +49,13 @@ pub enum Token {
     #[token("'")]
     SingleQuote,
 
-    #[regex("-?[0-9]+", int, priority=2)]
+    #[regex("-?[0-9]+", int, priority = 2)]
     Int(i64),
 
     #[regex(r#""(([^\x00-\x1F"\\]|\\["\\/bfnrt]|\\u[0-9a-fA-F]{4})*)""#, string)]
     String(String),
 
-    #[regex("[_a-zA-Z]+[_a-zA-Z0-9.?]*", name, priority=2)]
+    #[regex("[_a-zA-Z]+[_a-zA-Z0-9.?]*", name, priority = 2)]
     Name(String),
 
     #[regex("(true)|(false)", bool)]
@@ -178,7 +178,8 @@ pub fn tokenize(script: &str) -> Result<Vec<Token>, WanderError> {
 pub fn tokenize_and_filter(script: &str) -> Result<Vec<Token>, WanderError> {
     let tokens = tokenize(script);
     tokens.map(|mut tokens| {
-        tokens.retain(|token| !matches!(token, Token::Comment(_)) && !matches!(token, Token::WS(_)));
+        tokens
+            .retain(|token| !matches!(token, Token::Comment(_)) && !matches!(token, Token::WS(_)));
         tokens
     })
 }

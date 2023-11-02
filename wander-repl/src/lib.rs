@@ -17,7 +17,8 @@ pub struct REPLState<T: HostType> {
     pub bindings: Environment<T>,
 }
 
-pub fn start_repl<T: HostType>(state: &mut REPLState<T>) -> Result<()> { //TODO this should accept REPLState not create it
+pub fn start_repl<T: HostType>(state: &mut REPLState<T>) -> Result<()> {
+    //TODO this should accept REPLState not create it
     println!("Welcome to Wander's REPL!");
     println!("Press Ctrl+C or Ctrl+D or enter `:q` to quit.");
     println!("Enter :help or :h for help.");

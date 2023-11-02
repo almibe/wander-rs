@@ -16,10 +16,7 @@ fn basic_currying() {
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let res = format!("{res}");
     let res = run(&res, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::List(vec![
-        WanderValue::Bool(true),
-        WanderValue::Bool(false),
-    ]);
+    let expected = WanderValue::List(vec![WanderValue::Bool(true), WanderValue::Bool(false)]);
     assert_eq!(res, expected);
 }
 
@@ -37,10 +34,7 @@ fn currying_with_lambda() {
     let res = run(input, &mut common::<NoHostType>()).unwrap();
     let res = format!("{res}");
     let res = run(&res, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::List(vec![
-        WanderValue::Bool(true),
-        WanderValue::Bool(false),
-    ]);
+    let expected = WanderValue::List(vec![WanderValue::Bool(true), WanderValue::Bool(false)]);
     assert_eq!(res, expected);
 }
 
@@ -84,7 +78,11 @@ fn parse_multi_line_lambda() {
         None,
         None,
         Box::new(Element::Let(
-            vec![("x".to_owned(), None, Element::Grouping(vec![Element::Boolean(true)]))],
+            vec![(
+                "x".to_owned(),
+                None,
+                Element::Grouping(vec![Element::Boolean(true)]),
+            )],
             Box::new(Element::Grouping(vec![Element::Name("x".to_owned())])),
         )),
     );
@@ -112,7 +110,12 @@ fn define_and_call_lambda() {
 fn define_and_partially_call_lambda() {
     let input = "let val x = \\x y -> 31 in x 5 end";
     let res = run(input, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::Lambda("y".to_owned(), None, None, Box::new(Element::Grouping(vec![Element::Int(31)])));
+    let expected = WanderValue::Lambda(
+        "y".to_owned(),
+        None,
+        None,
+        Box::new(Element::Grouping(vec![Element::Int(31)])),
+    );
     assert_eq!(res, expected);
 }
 

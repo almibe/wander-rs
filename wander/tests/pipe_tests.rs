@@ -114,10 +114,7 @@ fn run_multiple_pipes() {
 #[test]
 #[ignore = "https://github.com/almibe/wander/issues/35"]
 fn run_pipe_in_let_expression() {
-    let res = run(
-        "let in true | Bool.not end",
-        &mut common::<NoHostType>(),
-    );
+    let res = run("let in true | Bool.not end", &mut common::<NoHostType>());
     let expected = Ok(WanderValue::Bool(false));
     assert_eq!(res, expected);
 }

@@ -6,11 +6,11 @@
 //! This code is mostly taken from Ligature,
 //! but I don't want to add a dependency on Ligature at the moment or vice-versa.
 
-use std::fmt::Display;
-use serde::{Deserialize, Serialize};
-use lazy_static::lazy_static;
 use crate::WanderError;
+use lazy_static::lazy_static;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 /// Check if a given identifier is valid.
 pub fn validate_identifier(id: &str) -> bool {

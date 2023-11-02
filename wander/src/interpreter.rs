@@ -243,7 +243,9 @@ fn run_lambda<T: HostType + Display>(
         };
         match function {
             WanderValue::Lambda(_, _, _, b) => {
-                let Ok(expression) = express(&b) else { return None };
+                let Ok(expression) = express(&b) else {
+                    return None;
+                };
                 match eval(&expression, environment) {
                     Ok(value) => {
                         expressions.push(value_to_expression(value));
