@@ -5,7 +5,7 @@
 //! This module is the main module for the ligature-repl project.
 
 use wander_repl::{start_repl, REPLState};
-use rustyline::Result;
+pub use rustyline::Result;
 use wander::preludes::common;
 use wander::NoHostType;
 

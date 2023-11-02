@@ -70,8 +70,8 @@ impl<T: HostType> HostFunction<T> for AndFunction {
         arguments: &[WanderValue<T>],
         _bindings: &Environment<T>,
     ) -> Result<crate::WanderValue<T>, WanderError> {
-        if let [WanderValue::Bool(left), WanderValue::Bool(right)] = arguments[..] {
-            Ok(crate::WanderValue::Bool(left && right))
+        if let [WanderValue::Bool(left), WanderValue::Bool(right)] = arguments {
+            Ok(crate::WanderValue::Bool(*left && *right))
         } else {
             Err(WanderError(
                 "`and` function requires two boolean parameters.".to_owned(),
@@ -99,7 +99,7 @@ impl<T: HostType> HostFunction<T> for NotFunction {
         arguments: &[WanderValue<T>],
         _bindings: &Environment<T>,
     ) -> Result<crate::WanderValue<T>, WanderError> {
-        if let [WanderValue::Bool(value)] = arguments[..] {
+        if let [WanderValue::Bool(value)] = arguments {
             Ok(crate::WanderValue::Bool(!value))
         } else {
             Err(WanderError(
@@ -215,15 +215,10 @@ impl<T: HostType> HostFunction<T> for AtFunction {
 pub fn common<T: HostType>() -> Environment<T> {
     let mut bindings = Environment::new();
     bindings.bind_host_function(Rc::new(EqFunction {}));
-
     bindings.bind_host_function(Rc::new(AssertEqFunction {}));
-
     bindings.bind_host_function(Rc::new(AndFunction {}));
     bindings.bind_host_function(Rc::new(NotFunction {}));
-
     bindings.bind_host_function(Rc::new(AtFunction {}));
-
     // bindings.bind_host_function(Rc::new(EnvironmentFunction {}));
-
     bindings
 }
