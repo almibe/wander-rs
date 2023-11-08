@@ -37,10 +37,12 @@ pub fn start_repl<T: HostType>(state: &mut REPLState<T>) -> Result<()> {
                         break;
                     }
                 } else {
-                    let result = run(line.as_str(), &mut state.bindings);
-                    match result {
-                        Ok(result) => println!("{result}"),
-                        Err(err) => println!("Error: {err:?}"),
+                    let results = run(line.as_str(), &mut state.bindings);
+                    for result in results {
+                        match result {
+                            Ok(result) => println!("{result}"),
+                            Err(err) => println!("Error: {err:?}"),
+                        }    
                     }
                 }
             }
@@ -91,8 +93,8 @@ fn parse<T: HostType>(input: &str, instance: &Environment<T>) -> bool {
     println!("Tokens:\n{:?}\n", introspection.tokens_ws);
     println!("Tokens Filtered:\n{:?}\n", introspection.tokens);
     println!("Transformed:\n{:?}\n", introspection.tokens_transformed);
-    println!("Element:\n{:?}\n", introspection.element);
-    println!("Expression:\n{:?}\n", introspection.expression);
+    println!("Elements:\n{:?}\n", introspection.elements);
+    println!("Expressions:\n{:?}\n", introspection.expressions);
     true
 }
 
