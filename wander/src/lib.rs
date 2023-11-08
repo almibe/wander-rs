@@ -8,7 +8,7 @@
 
 use std::{
     collections::{HashMap, HashSet},
-    fmt::{Debug, Display, Write},
+    fmt::{Debug, Display, Write}, ops::Range,
 };
 
 use environment::Environment;
@@ -93,7 +93,7 @@ pub trait HostFunction<T: HostType> {
 }
 
 /// Type alias used for TokenTransformers.
-pub type TokenTransformer = fn(&[Token]) -> Result<Vec<Token>, WanderError>;
+pub type TokenTransformer = fn(&[Location<Token>]) -> Result<Vec<Location<Token>>, WanderError>;
 
 /// A value of a type provided by the host application that can be accessed via Wander.
 /// Note it cannot be accessed by Wander directly, only through HostFunctions.
@@ -161,7 +161,7 @@ pub fn write_float(float: &f64) -> String {
     }
 }
 
-// Encode a
+// Write out Bytes as a String.
 // pub fn write_bytes(bytes: &Bytes) -> String {
 //     format!("0x{}", encode(bytes))
 // }
@@ -265,27 +265,43 @@ impl<T: Clone + Display + PartialEq + Eq + std::fmt::Debug> Display for WanderVa
 pub fn run<T: HostType + Display>(
     script: &str,
     bindings: &mut Environment<T>,
-) -> Result<WanderValue<T>, WanderError> {
-    let tokens = tokenize_and_filter(script)?;
-    let tokens = transform(&tokens, bindings)?;
-    let elements = parse(tokens)?;
-    let expression = translate(elements)?;
-    eval(&expression, bindings)
+) -> Vec<Result<WanderValue<T>, WanderError>> {
+    let tokens = match tokenize_and_filter(script) {
+        Ok(v) => v,
+        Err(err) => return vec![Err(err)],
+    };
+    let tokens = match transform(&tokens, bindings) {
+        Ok(v) => v,
+        Err(err) => return vec![Err(err)],
+    };
+    let elements = match parse(tokens) {
+        Ok(v) => v,
+        Err(err) => return vec![Err(err)],
+    };
+    let expressions = match translate(elements) {
+        Ok(v) => v,
+        Err(err) => return vec![Err(err)],
+    };
+    expressions.iter().map(|Location(expression, _)| eval(&expression, bindings)).collect()
 }
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq)]
+/// Store location information alongside a value.
+pub struct Location<T>(pub T, pub usize);
 
 #[derive(Debug, Serialize)]
 /// Structure used for debugging or inspecting code.
 pub struct Introspection {
     /// A list of all Tokens including whitespace.
-    pub tokens_ws: Vec<Token>,
+    pub tokens_ws: Vec<Location<Token>>,
     /// A list of all Tokens without whitespace.
-    pub tokens: Vec<Token>,
+    pub tokens: Vec<Location<Token>>,
     /// A list of all Tokens after macro transformations.
-    pub tokens_transformed: Vec<Token>,
+    pub tokens_transformed: Vec<Location<Token>>,
     /// Element representation.
-    pub element: Element,
+    pub elements: Vec<Location<Element>>,
     /// Expression representation.
-    pub expression: Expression,
+    pub expressions: Vec<Location<Expression>>,
 }
 
 /// Run a Wander script with the given Bindings.
@@ -296,13 +312,13 @@ pub fn introspect<T: HostType>(
     let tokens_ws = tokenize(script).or(Ok(vec![]))?;
     let tokens = tokenize_and_filter(script).or(Ok(vec![]))?;
     let tokens_transformed = transform(&tokens.clone(), bindings).or(Ok(vec![]))?;
-    let element = parse(tokens_transformed.clone()).or(Ok(Element::String("Error".to_owned())))?; //TODO handle errors better
-    let expression = translate(element.clone()).or(Ok(Expression::String("Error".to_owned())))?; //TODO handle errors better
+    let elements = parse(tokens_transformed.clone()).or(Ok(vec![]))?; //TODO handle errors better
+    let expressions = translate(elements.clone()).or(Ok(vec![]))?; //TODO handle errors better
     Ok(Introspection {
         tokens_ws,
         tokens,
         tokens_transformed,
-        element,
-        expression,
+        elements,
+        expressions,
     })
 }

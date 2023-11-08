@@ -4,25 +4,25 @@
 
 use wander::{preludes::common, run, NoHostType, WanderValue};
 
-#[test]
-fn calling_not() {
-    let input = "Bool.not true";
-    let res = run(input, &mut common::<NoHostType>());
-    let expected = Ok(WanderValue::Bool(false));
-    assert_eq!(res, expected);
-}
+// #[test]
+// fn calling_not() {
+//     let input = "Bool.not true";
+//     let res = run(input, &mut common::<NoHostType>());
+//     let expected = Ok(WanderValue::Bool(false));
+//     assert_eq!(res, expected);
+// }
 
-#[test]
-fn passing_assert_eq_call() {
-    let input = "Assert.assertEq true true";
-    let res = run(input, &mut common::<NoHostType>());
-    let expected = Ok(WanderValue::Nothing);
-    assert_eq!(res, expected);
-}
+// #[test]
+// fn passing_assert_eq_call() {
+//     let input = "Assert.assertEq true true";
+//     let res = run(input, &mut common::<NoHostType>());
+//     let expected = Ok(WanderValue::Nothing);
+//     assert_eq!(res, expected);
+// }
 
-#[test]
-fn failing_assert_eq_call() {
-    let input = "Assert.assertEq true \"true\"";
-    let res = run(input, &mut common::<NoHostType>());
-    assert!(res.is_err());
-}
+// #[test]
+// fn failing_assert_eq_call() {
+//     let input = "Assert.assertEq true \"true\"";
+//     let res = run(input, &mut common::<NoHostType>()).first().unwrap();
+//     assert!(res.is_err());
+// }

@@ -4,7 +4,7 @@
 
 use wander::parser::Element;
 
-use crate::utilities::parse_str;
+//use crate::utilities::parse_str;
 
 #[path = "utilities.rs"]
 mod utilities;

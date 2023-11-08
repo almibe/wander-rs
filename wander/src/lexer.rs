@@ -5,7 +5,7 @@
 use logos::{Lexer, Logos};
 use serde::Serialize;
 
-use crate::{environment::Environment, identifier::Identifier, HostType, WanderError};
+use crate::{environment::Environment, identifier::Identifier, HostType, WanderError, Location};
 
 #[derive(Logos, Debug, PartialEq, Clone, Serialize)]
 #[logos()]
@@ -163,38 +163,38 @@ fn ws(lex: &mut Lexer<Token>) -> Option<String> {
     Some(lex.slice().to_string())
 }
 
-pub fn tokenize(script: &str) -> Result<Vec<Token>, WanderError> {
-    let lexer = Token::lexer(script);
+pub fn tokenize(script: &str) -> Result<Vec<Location<Token>>, WanderError> {
+    let lexer = Token::lexer(script).spanned();
     let mut results = vec![];
-    for token in lexer {
+    for (token, range) in lexer {
         match token {
-            Ok(token) => results.push(token),
+            Ok(token) => results.push(Location(token, range.start)),
             Err(_) => return Err(WanderError(String::from("Error tokenizing input."))),
         }
     }
     Ok(results)
 }
 
-pub fn tokenize_and_filter(script: &str) -> Result<Vec<Token>, WanderError> {
+pub fn tokenize_and_filter(script: &str) -> Result<Vec<Location<Token>>, WanderError> {
     let tokens = tokenize(script);
     tokens.map(|mut tokens| {
         tokens
-            .retain(|token| !matches!(token, Token::Comment(_)) && !matches!(token, Token::WS(_)));
+            .retain(|Location(token, _)| !matches!(token, Token::Comment(_)) && !matches!(token, Token::WS(_)));
         tokens
     })
 }
 
 pub fn transform<T: HostType>(
-    input: &[Token],
+    input: &[Location<Token>],
     bindings: &Environment<T>,
-) -> Result<Vec<Token>, WanderError> {
+) -> Result<Vec<Location<Token>>, WanderError> {
     let mut index = 0;
-    let mut results = vec![];
-    while let Some(token) = input.get(index) {
+    let mut results: Vec<Location<Token>> = vec![];
+    while let Some(Location(token, position)) = input.get(index) {
         if token == &Token::Backtick {
-            let mut internal_results = vec![];
+            let mut internal_results: Vec<Location<Token>> = vec![];
             let transformer = match input.get(index - 1) {
-                Some(Token::Name(name)) => match bindings.read_token_transformer(name) {
+                Some(Location(Token::Name(name), _)) => match bindings.read_token_transformer(name) {
                     Some(transformer) => transformer,
                     None => {
                         return Err(WanderError(format!(
@@ -206,18 +206,18 @@ pub fn transform<T: HostType>(
             };
             results.pop(); //remove transformer's name token
             index += 1; //skip first `
-            while let Some(token) = input.get(index) {
+            while let Some(Location(token, position)) = input.get(index) {
                 if token == &Token::Backtick {
                     let transformed_content = transformer(&internal_results).unwrap();
                     results.append(&mut transformed_content.to_vec());
                     break;
                 } else {
-                    internal_results.push(token.to_owned());
+                    internal_results.push(Location(token.to_owned(), position.clone()));
                 }
                 index += 1;
             }
         } else {
-            results.push(token.to_owned());
+            results.push(Location(token.to_owned(), position.clone()));
         }
         index += 1;
     }

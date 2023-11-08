@@ -4,12 +4,17 @@
 
 use std::collections::HashMap;
 
-use crate::{interpreter::Expression, parser::Element, WanderError};
+use crate::{interpreter::Expression, parser::Element, WanderError, Location};
 
 // Handle any tranlations needed before creating an expression.
-pub fn translate(element: Element) -> Result<Expression, WanderError> {
-    let element = process_pipes(&element)?;
-    express(&element)
+pub fn translate(elements: Vec<Location<Element>>) -> Result<Vec<Location<Expression>>, WanderError> {
+    let mut results = vec![];
+    for Location(element, source) in elements {
+        let element = process_pipes(&element)?;
+        let expression = express(&element)?;
+        results.push(Location(expression, source));
+    }
+    Ok(results)
 }
 
 fn process_pipes(element: &Element) -> Result<Element, WanderError> {

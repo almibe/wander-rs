@@ -29,3 +29,5 @@ deno run --allow-all ./merge_template.ts
 
 This will update the package.json.
 From there just publish to npm as normal and update the template accordingly.
+
+To target JS directly instead of Wasm see https://rustwasm.github.io/wasm-bindgen/examples/wasm2js.html.

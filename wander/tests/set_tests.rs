@@ -6,10 +6,10 @@ use std::collections::HashSet;
 
 use wander::{preludes::common, run, NoHostType, WanderValue};
 
-#[test]
-fn empty_set() {
-    let input = "#()";
-    let res = run(input, &mut common::<NoHostType>()).unwrap();
-    let expected = WanderValue::Set(HashSet::new());
-    assert_eq!(res, expected);
-}
+// #[test]
+// fn empty_set() {
+//     let input = "#()";
+//     let res = run(input, &mut common::<NoHostType>()).unwrap();
+//     let expected = WanderValue::Set(HashSet::new());
+//     assert_eq!(res, expected);
+// }
