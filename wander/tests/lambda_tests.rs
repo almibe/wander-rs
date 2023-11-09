@@ -4,21 +4,21 @@
 
 use wander::{parser::Element, preludes::common, run, NoHostType, WanderValue};
 
-// #[test]
-// fn basic_currying() {
-//     let input = r#"
-//     let
-//       val isTrue = Bool.and true
-//     in 
-//       [(isTrue true) (isTrue false)]
-//     end
-//     "#;
-//     let res = run(input, &mut common::<NoHostType>()).first().unwrap().unwrap();
-//     let res = format!("{res}");
-//     let res = run(&res, &mut common::<NoHostType>()).unwrap();
-//     let expected = WanderValue::List(vec![WanderValue::Bool(true), WanderValue::Bool(false)]);
-//     assert_eq!(res, expected);
-// }
+#[test]
+fn basic_currying() {
+    let input = r#"
+    let
+      isTrue = Bool.and true
+    in 
+      [(isTrue true) (isTrue false)]
+    end
+    "#;
+    let res = run(input, &mut common::<NoHostType>()).first().unwrap().clone().unwrap();
+    let res = format!("{res}");
+    let res = run(&res, &mut common::<NoHostType>()).first().unwrap().clone().unwrap();
+    let expected = WanderValue::List(vec![WanderValue::Bool(true), WanderValue::Bool(false)]);
+    assert_eq!(res, expected);
+}
 
 // #[test]
 // fn currying_with_lambda() {

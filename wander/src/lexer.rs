@@ -16,9 +16,6 @@ pub enum Token {
     #[token("let")]
     Let,
 
-    #[token("val")]
-    Val,
-
     #[token("in")]
     In,
 

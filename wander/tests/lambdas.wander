@@ -1,3 +1,0 @@
-[
-    \test -> Assert.assertEq 1 1
-]

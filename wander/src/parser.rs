@@ -326,8 +326,8 @@ fn tuple(gaze: &mut Gaze<Location<Token>>) -> Option<Location<Element>> {
 }
 
 fn val_binding(gaze: &mut Gaze<Location<Token>>) -> Option<(String, Option<String>, Element)> {
-    let name = match (gaze.next(), gaze.next()) {
-        (Some(Location(Token::Val, _)), Some(Location(Token::Name(name), _))) => name,
+    let name = match gaze.next() {
+        Some(Location(Token::Name(name), _)) => name,
         _ => return None,
     };
     let tag = match gaze.peek() {
