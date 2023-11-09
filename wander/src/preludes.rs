@@ -33,6 +33,33 @@ impl<T: HostType> HostFunction<T> for EqFunction {
     }
 }
 
+struct LogFunction {}
+impl<T: HostType> HostFunction<T> for LogFunction {
+    fn run(
+        &self,
+        arguments: &[WanderValue<T>],
+        _bindings: &Environment<T>,
+    ) -> Result<WanderValue<T>, WanderError> {
+        if let [message] = arguments {
+            println!("{message}");
+            Ok(WanderValue::Nothing)
+        } else {
+            Err(WanderError(
+                "`log` function requires a message to print.".to_owned(),
+            ))
+        }
+    }
+
+    fn binding(&self) -> HostFunctionBinding {
+        HostFunctionBinding {
+            name: "log".to_owned(),
+            parameters: vec![("message".to_owned(), None)],
+            result: None,
+            doc_string: "Log a message.".to_owned(),
+        }
+    }
+}
+
 struct AssertEqFunction {}
 impl<T: HostType> HostFunction<T> for AssertEqFunction {
     fn run(
@@ -221,4 +248,8 @@ pub fn common<T: HostType>() -> Environment<T> {
     bindings.bind_host_function(Rc::new(AtFunction {}));
     // bindings.bind_host_function(Rc::new(EnvironmentFunction {}));
     bindings
+}
+
+pub fn add_print<T: HostType>(environment: &mut Environment<T>) {
+    environment.bind_host_function(Rc::new(LogFunction {}));
 }

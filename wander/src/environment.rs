@@ -4,7 +4,7 @@
 
 use crate::{
     parser::Element, EpsilonChecker, HostFunction, HostFunctionBinding, HostType, TokenTransformer,
-    TypeChecker, WanderValue,
+    TypeChecker, WanderValue, Location,
 };
 use std::{
     cell::RefCell,
@@ -87,12 +87,12 @@ impl<T: HostType> Environment<T> {
                         name.clone(),
                         tag.clone(),
                         None,
-                        Box::new(Element::Lambda(
+                        Box::new(Location(Element::Lambda(
                             innerp.clone(),
                             i.clone(),
                             o.clone(),
                             b.clone(),
-                        )),
+                        ), 0),)
                     ));
                 }
                 _ => panic!("Should never reach."),
@@ -103,7 +103,7 @@ impl<T: HostType> Environment<T> {
                     name.clone(),
                     tag.clone(),
                     None,
-                    Box::new(Element::HostFunction(full_name.clone())),
+                    Box::new(Location(Element::HostFunction(full_name.clone()),0),)
                 ));
             }
         });

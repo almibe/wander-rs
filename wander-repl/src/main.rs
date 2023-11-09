@@ -8,9 +8,11 @@ pub use rustyline::Result;
 use wander::preludes::common;
 use wander::NoHostType;
 use wander_repl::{start_repl, REPLState};
+use wander::preludes::add_print;
 
 fn main() -> Result<()> {
-    let bindings = common::<NoHostType>();
-    let mut state = REPLState { bindings };
+    let mut environment = common::<NoHostType>();
+    add_print(&mut environment);
+    let mut state = REPLState { environment };
     start_repl(&mut state)
 }

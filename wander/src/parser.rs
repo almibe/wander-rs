@@ -5,7 +5,7 @@
 use crate::{identifier::Identifier, lexer::Token, WanderError, Location};
 use gaze::Gaze;
 use serde::{Deserialize, Serialize};
-use std::{collections::{HashMap, HashSet}, ops::Range};
+use std::collections::{HashMap, HashSet};
 
 #[doc(hidden)]
 #[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
@@ -15,16 +15,16 @@ pub enum Element {
     String(String),
     Identifier(Identifier),
     Name(String),
-    TaggedName(String, Box<Element>),
+    TaggedName(String, Box<Location<Element>>),
     HostFunction(String),
-    Let(Vec<(String, Option<String>, Element)>, Box<Element>),
-    Grouping(Vec<Element>),
-    Conditional(Box<Element>, Box<Element>, Box<Element>),
-    Lambda(String, Option<String>, Option<String>, Box<Element>),
-    Tuple(Vec<Element>),
-    List(Vec<Element>),
-    Set(HashSet<Element>),
-    Record(HashMap<String, Element>),
+    Let(Vec<(String, Option<String>, Location<Element>)>, Box<Location<Element>>),
+    Grouping(Vec<Location<Element>>),
+    Conditional(Box<Location<Element>>, Box<Location<Element>>, Box<Location<Element>>),
+    Lambda(String, Option<String>, Option<String>, Box<Location<Element>>),
+    Tuple(Vec<Location<Element>>),
+    List(Vec<Location<Element>>),
+    Set(HashSet<Location<Element>>),
+    Record(HashMap<String, Location<Element>>),
     Nothing,
     Pipe,
 }
@@ -104,23 +104,23 @@ fn let_scope(gaze: &mut Gaze<Location<Token>>) -> Option<Location<Element>> {
             };
 
             match gaze.next() {
-                Some(Location(Token::End, position)) => Some(Location(Element::Let(decls, Box::new(body.0)), position)),
+                Some(Location(Token::End, position)) => Some(Location(Element::Let(decls, Box::new(body)), position)),
                 _ => None,
             }
         }
-        _ => Some(Location(Element::Let(decls, Box::new(Element::Nothing)), position)),
+        _ => Some(Location(Element::Let(decls, Box::new(Location(Element::Nothing, 0))), position)),
     }
 }
 
 fn grouping(gaze: &mut Gaze<Location<Token>>) -> Option<Location<Element>> {
-    let mut expressions: Vec<Element> = vec![];
+    let mut expressions: Vec<Location<Element>> = vec![];
     let position = match gaze.peek() {
         Some(Location(_, p)) => p,
         None => return None,
     };
 
     while let Some(e) = gaze.attemptf(&mut element_inner) {
-        expressions.push(e.0);
+        expressions.push(e);
     }
 
     match &expressions[..] {
@@ -130,7 +130,7 @@ fn grouping(gaze: &mut Gaze<Location<Token>>) -> Option<Location<Element>> {
 }
 
 fn grouped_application(gaze: &mut Gaze<Location<Token>>) -> Option<Location<Element>> {
-    let mut expressions: Vec<Element> = vec![];
+    let mut elements = vec![];
 
     let position = match gaze.next() {
         Some(Location(Token::OpenParen, position)) => position,
@@ -138,11 +138,11 @@ fn grouped_application(gaze: &mut Gaze<Location<Token>>) -> Option<Location<Elem
     };
 
     while let Some(e) = gaze.attemptf(&mut element_inner) {
-        expressions.push(e.0);
+        elements.push(e);
     }
 
     match gaze.next() {
-        Some(Location(Token::CloseParen, position)) => Some(Location(Element::Grouping(expressions), position)),
+        Some(Location(Token::CloseParen, position)) => Some(Location(Element::Grouping(elements), position)),
         _ => None,
     }
 }
@@ -181,9 +181,9 @@ fn conditional(gaze: &mut Gaze<Location<Token>>) -> Option<Location<Element>> {
         return None;
     }
     Some(Location(Element::Conditional(
-        Box::new(cond.0),
-        Box::new(ife.0),
-        Box::new(elsee.0),
+        Box::new(cond),
+        Box::new(ife),
+        Box::new(elsee),
     ), position))
 }
 
@@ -219,24 +219,24 @@ fn lambda(gaze: &mut Gaze<Location<Token>>) -> Option<Location<Element>> {
         for (name, tag) in params {
             match final_lambda {
                 Some(prev_lambda) => {
-                    final_lambda = Some(Element::Lambda(
+                    final_lambda = Some(Location(Element::Lambda(
                         name.clone(),
                         tag,
                         None,
                         Box::new(prev_lambda),
-                    ))
+                    ), 0))
                 }
                 None => {
-                    final_lambda = Some(Element::Lambda(
+                    final_lambda = Some(Location(Element::Lambda(
                         name.clone(),
                         tag,
                         None,
-                        Box::new(body.clone().0),
+                        Box::new(body.clone()),), 0
                     ))
                 }
             }
         }
-        Location(final_lambda.unwrap(), position)
+        final_lambda.unwrap()
     })
 }
 
@@ -248,7 +248,7 @@ fn list(gaze: &mut Gaze<Location<Token>>) -> Option<Location<Element>> {
 
     let mut contents = vec![];
     while let Some(e) = gaze.attemptf(&mut element_inner) {
-        contents.push(e.0)
+        contents.push(e)
     }
 
     match gaze.next() {
@@ -270,7 +270,7 @@ fn record(gaze: &mut Gaze<Location<Token>>) -> Option<Location<Element>> {
             _ => return None,
         };
         match gaze.attemptf(&mut element_inner) {
-            Some(element) => contents.insert(name, element.0),
+            Some(element) => contents.insert(name, element),
             None => None,
         };
     }
@@ -294,7 +294,7 @@ fn set(gaze: &mut Gaze<Location<Token>>) -> Option<Location<Element>> {
 
     let mut contents = HashSet::new();
     while let Some(e) = gaze.attemptf(&mut element_inner) {
-        contents.insert(e.0);
+        contents.insert(e);
     }
 
     match gaze.next() {
@@ -316,7 +316,7 @@ fn tuple(gaze: &mut Gaze<Location<Token>>) -> Option<Location<Element>> {
 
     let mut contents = vec![];
     while let Some(e) = gaze.attemptf(&mut element_inner) {
-        contents.push(e.0)
+        contents.push(e)
     }
 
     match gaze.next() {
@@ -325,7 +325,7 @@ fn tuple(gaze: &mut Gaze<Location<Token>>) -> Option<Location<Element>> {
     }
 }
 
-fn val_binding(gaze: &mut Gaze<Location<Token>>) -> Option<(String, Option<String>, Element)> {
+fn val_binding(gaze: &mut Gaze<Location<Token>>) -> Option<(String, Option<String>, Location<Element>)> {
     let name = match gaze.next() {
         Some(Location(Token::Name(name), _)) => name,
         _ => return None,
@@ -347,7 +347,7 @@ fn val_binding(gaze: &mut Gaze<Location<Token>>) -> Option<(String, Option<Strin
         _ => return None,
     };
 
-    gaze.attemptf(&mut element).map(|body| (name, tag, body.0))
+    gaze.attemptf(&mut element).map(|body| (name, tag, body))
 }
 
 //this function is basically the same as element inner but it matches name instead of application
@@ -399,16 +399,15 @@ fn elements(gaze: &mut Gaze<Location<Token>>) -> Option<Vec<Location<Element>>> 
 }
 
 /// Parse a sequence of Tokens into a sequence of ASTs.
-pub fn parse(tokens: Vec<Location<Token>>) -> Result<Vec<Location<Element>>, WanderError> {
+pub fn parse(tokens: Vec<Location<Token>>) -> Result<Location<Element>, WanderError> {
     let mut gaze = Gaze::from_vec(tokens);
     match gaze.attemptf(&mut elements) {
         Some(values) => {
-            // if values.len() == 1 {
-            //     Ok(values.clone())
-            // } else {
-            //     Ok(vec![Element::Grouping(values.to_vec())])
-            // }
-            Ok(values)
+            if values.len() == 1 {
+                Ok(values.first().unwrap().clone())
+            } else {
+                Ok(Location(Element::Grouping(values), 0))
+            }
         }
         None => Err(WanderError(format!("Error parsing {:?}", gaze.peek()))),
     }

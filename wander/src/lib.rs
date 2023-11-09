@@ -119,7 +119,7 @@ pub enum WanderValue<T: Clone + PartialEq + Eq> {
     /// The nothing value.
     Nothing,
     /// A Lambda
-    Lambda(String, Option<String>, Option<String>, Box<Element>),
+    Lambda(String, Option<String>, Option<String>, Box<Location<Element>>),
     /// A List.
     List(Vec<WanderValue<T>>),
     /// A Tuple.
@@ -265,29 +265,29 @@ impl<T: Clone + Display + PartialEq + Eq + std::fmt::Debug> Display for WanderVa
 pub fn run<T: HostType + Display>(
     script: &str,
     bindings: &mut Environment<T>,
-) -> Vec<Result<WanderValue<T>, WanderError>> {
+) -> Result<WanderValue<T>, WanderError> {
     let tokens = match tokenize_and_filter(script) {
         Ok(v) => v,
-        Err(err) => return vec![Err(err)],
+        Err(err) => return Err(err),
     };
     let tokens = match transform(&tokens, bindings) {
         Ok(v) => v,
-        Err(err) => return vec![Err(err)],
+        Err(err) => return Err(err),
     };
     let elements = match parse(tokens) {
         Ok(v) => v,
-        Err(err) => return vec![Err(err)],
+        Err(err) => return Err(err),
     };
-    let expressions = match translate(elements) {
+    let expression = match translate(elements) {
         Ok(v) => v,
-        Err(err) => return vec![Err(err)],
+        Err(err) => return Err(err),
     };
-    expressions.iter().map(|Location(expression, _)| eval(&expression, bindings)).collect()
+    eval(&expression, bindings)
 }
 
-#[derive(Debug, Serialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Deserialize, Hash)]
 /// Store location information alongside a value.
-pub struct Location<T>(pub T, pub usize);
+pub struct Location<T: PartialEq + Eq>(pub T, pub usize);
 
 #[derive(Debug, Serialize)]
 /// Structure used for debugging or inspecting code.
@@ -299,9 +299,9 @@ pub struct Introspection {
     /// A list of all Tokens after macro transformations.
     pub tokens_transformed: Vec<Location<Token>>,
     /// Element representation.
-    pub elements: Vec<Location<Element>>,
+    pub element: Location<Element>,
     /// Expression representation.
-    pub expressions: Vec<Location<Expression>>,
+    pub expression: Location<Expression>,
 }
 
 /// Run a Wander script with the given Bindings.
@@ -312,13 +312,13 @@ pub fn introspect<T: HostType>(
     let tokens_ws = tokenize(script).or(Ok(vec![]))?;
     let tokens = tokenize_and_filter(script).or(Ok(vec![]))?;
     let tokens_transformed = transform(&tokens.clone(), bindings).or(Ok(vec![]))?;
-    let elements = parse(tokens_transformed.clone()).or(Ok(vec![]))?; //TODO handle errors better
-    let expressions = translate(elements.clone()).or(Ok(vec![]))?; //TODO handle errors better
+    let element = parse(tokens_transformed.clone()).or(Ok(Location(Element::Nothing, 0)))?; //TODO handle errors better
+    let expression = translate(element.clone()).or(Ok(Location(Expression::Nothing, 0)))?; //TODO handle errors better
     Ok(Introspection {
         tokens_ws,
         tokens,
         tokens_transformed,
-        elements,
-        expressions,
+        element,
+        expression,
     })
 }

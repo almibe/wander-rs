@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 use wander::{
     interpreter::eval, interpreter::Expression, preludes::common, HostFunction,
-    HostFunctionBinding, HostValue, WanderError, WanderValue,
+    HostFunctionBinding, HostValue, WanderError, WanderValue, Location,
 };
 
 struct SayHello {}
@@ -35,7 +35,7 @@ impl HostFunction<String> for SayHello {
 fn eval_host_value() {
     let mut bindings = common::<String>();
     bindings.bind_host_function(Rc::new(SayHello {}));
-    let input = Expression::Nothing;
+    let input = Location(Expression::Nothing, 0);
     let res = eval(&input, &mut bindings);
     let expected = Ok(WanderValue::HostValue(HostValue {
         value: "hello!".to_owned(),

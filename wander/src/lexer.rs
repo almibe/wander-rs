@@ -7,7 +7,7 @@ use serde::Serialize;
 
 use crate::{environment::Environment, identifier::Identifier, HostType, WanderError, Location};
 
-#[derive(Logos, Debug, PartialEq, Clone, Serialize)]
+#[derive(Logos, Debug, PartialEq, Eq, Clone, Serialize)]
 #[logos()]
 pub enum Token {
     #[regex("[ \t\n\r]+", ws)]

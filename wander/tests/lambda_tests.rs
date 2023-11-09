@@ -13,9 +13,9 @@ fn basic_currying() {
       [(isTrue true) (isTrue false)]
     end
     "#;
-    let res = run(input, &mut common::<NoHostType>()).first().unwrap().clone().unwrap();
+    let res = run(input, &mut common::<NoHostType>()).clone().unwrap();
     let res = format!("{res}");
-    let res = run(&res, &mut common::<NoHostType>()).first().unwrap().clone().unwrap();
+    let res = run(&res, &mut common::<NoHostType>()).clone().unwrap();
     let expected = WanderValue::List(vec![WanderValue::Bool(true), WanderValue::Bool(false)]);
     assert_eq!(res, expected);
 }
