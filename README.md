@@ -1,3 +1,7 @@
+# Note:
+
+Active development on this project has moved to https://github.com/almibe/ligature-rs
+
 # Wander
 
 Wander is a programming language designed for extending applications.
